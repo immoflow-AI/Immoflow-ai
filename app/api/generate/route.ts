@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     const client = new Groq();
 
     const completion = await client.chat.completions.create({
-      model: "llama3-70b-8192",   // Llama 3 70b — offre gratuite Groq
+      model: "llama-3.3-70b-versatile",   // Llama 3 70b — offre gratuite Groq
       temperature: 0.7,           // Un peu de créativité, mais reste cohérent
       max_tokens: 1500,
       response_format: { type: "json_object" }, // Force le mode JSON natif de Groq
