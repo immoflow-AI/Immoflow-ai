@@ -253,7 +253,13 @@ export default function ImmoFlowApp() {
       // const res = await fetch("/api/generate", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ notes }) });
       // if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
       // const data = await res.json();
-      const data = await mockGenerateAPI(notes);
+      const res = await fetch("/api/generate", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ notes }),
+});
+if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+const data = await res.json();
       setResult(data);
       setStatus("success");
       setActiveTab("annonce");
