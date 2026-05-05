@@ -230,7 +230,7 @@ function PostPanel({ text }: { text: string }) {
 
 // ─── App principale ───────────────────────────────────────────────────────────
 
-const TABS: {id: TabId; label: string; icon: () => JSX.Element}[] = [
+const TABS: {id: TabId; label: string; icon: () => React.ReactElement}[] = [
   {id:"annonce",   label:"Annonce Pro",      icon: IconFileText},
   {id:"storyboard",label:"Storyboard Vidéo", icon: IconFilm},
   {id:"reseaux",   label:"Réseaux Sociaux",  icon: IconShare},
