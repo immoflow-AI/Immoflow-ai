@@ -7,12 +7,22 @@ export default function LandingPage() {
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
 
-  const handleSubmit = async () => {
+ const handleSubmit = async () => {
     if (!email.trim() || !email.includes("@")) return;
     setSending(true);
-    await new Promise(r => setTimeout(r, 1000));
-    setSent(true);
-    setSending(false);
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) throw new Error();
+      setSent(true);
+    } catch {
+      alert("Erreur lors de l'envoi. Réessayez.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
