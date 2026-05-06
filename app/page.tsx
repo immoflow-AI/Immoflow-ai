@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import jsPDF from "jspdf";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -24,87 +25,175 @@ interface ImmoFlowResult {
 type Status = "idle" | "loading" | "success" | "error";
 type TabId = "annonce" | "storyboard" | "reseaux";
 
-// ─── Mock API Simulator ───────────────────────────────────────────────────────
-// Remplacez cette fonction par un vrai fetch("/api/generate", ...) en production.
+// ─── Export PDF ───────────────────────────────────────────────────────────────
 
-async function mockGenerateAPI(notes: string): Promise<ImmoFlowResult> {
-  await new Promise((r) => setTimeout(r, 1800));
+function exportPDF(result: ImmoFlowResult) {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const W = 210;
+  const margin = 18;
+  const maxW = W - margin * 2;
+  let y = 0;
 
-  const hasTravaux = notes.toLowerCase().includes("travaux");
-  const hasBalcon = notes.toLowerCase().includes("balcon");
-  const hasHaussmann = notes.toLowerCase().includes("haussmann");
+  // Fond noir header
+  doc.setFillColor(13, 11, 9);
+  doc.rect(0, 0, W, 42, "F");
 
-  return {
-    annonce_pro: {
-      titre: hasHaussmann
-        ? "Haussmannien d'exception — volumes souverains et lumière dorée"
-        : "Un appartement où le temps s'arrête, entre élégance et sérénité",
-      description:
-        "Derrière une façade bourgeoise au charme intemporel, cet appartement déploie des volumes généreux baignés d'une lumière naturelle rare. " +
-        "Les hauteurs sous plafond, les moulures d'époque et les parquets anciens composent un écrin d'une rare noblesse. " +
-        (hasTravaux
-          ? "Une opportunité de personnalisation s'offre à l'acquéreur exigeant, pour faire de ces espaces le reflet d'un goût affirmé. "
-          : "Chaque pièce a été pensée comme un tableau vivant, où matières nobles et lumière naturelle dialoguent avec grâce. ") +
-        "Ici, l'art de vivre parisien prend tout son sens.",
-      points_forts: [
-        "Volumes exceptionnels, plafonds à " + (hasHaussmann ? "3,20m" : "2,80m"),
-        hasBalcon ? "Balcon exposé Sud — terrasse de lumière à toute heure" : "Luminosité remarquable, double exposition",
-        "Parquet point de Hongrie d'origine, cheminées en marbre",
-        hasTravaux ? "Potentiel de personnalisation totale — sur plan vierge" : "Prestations haut de gamme, aucun travaux",
-        "Environnement calme et préservé, à l'abri de l'agitation",
-      ],
-    },
-    storyboard_video: [
-      {
-        plan: "Travelling avant lent sur la façade haussmannienne, lever du jour — angle légèrement bas valorisant la hauteur",
-        voix_off: "Paris. Certaines adresses ne se découvrent pas, elles se révèlent.",
-      },
-      {
-        plan: "Push-in depuis le couloir d'entrée vers le salon, lumière naturelle en contre-jour",
-        voix_off: "Dès le premier pas, les volumes s'imposent. Le silence aussi.",
-      },
-      {
-        plan: hasBalcon
-          ? "Plan fixe sur le balcon Sud — soleil rasant, mobilier épuré, vue dégagée"
-          : "Plan fixe sur la fenêtre en plein cintre, rideaux légers animés par la brise",
-        voix_off: hasBalcon
-          ? "Un balcon comme une scène privée, offert à la lumière du Sud."
-          : "La lumière entre ici comme une invitée permanente.",
-      },
-      {
-        plan: "Macro glissé sur les détails architecturaux — moulure, parquet, poignée de porte en laiton",
-        voix_off: "Les détails sont le langage de l'excellence. Chacun raconte une époque.",
-      },
-      {
-        plan: "Plan large de la chambre principale, lit centré, symétrie parfaite",
-        voix_off: "Les nuits ici ressemblent à des parenthèses hors du temps.",
-      },
-      {
-        plan: "Plan final : sortie lente en steadicam vers la porte d'entrée, fondu au noir sur le logo de l'agence",
-        voix_off: "Une résidence d'exception ne se visite pas — elle se ressent.",
-      },
-    ],
-    post_reseaux:
-      "✨ Nouveau bien d'exception — Paris\n\n" +
-      "Des volumes qui coupent le souffle. Une lumière qui ne ment pas.\n\n" +
-      (hasBalcon ? "🌿 Balcon plein Sud, vue dégagée\n" : "") +
-      "🏛️ Architecture Haussmannienne, détails d'époque préservés\n" +
-      "🔑 Un art de vivre rare, à deux pas de tout\n\n" +
-      (hasTravaux
-        ? "Une opportunité unique de créer votre intérieur sur-mesure.\n\n"
-        : "Prestations soignées, prêt à habiter.\n\n") +
-      "Visites sur rendez-vous exclusivement.\n" +
-      "DM ou lien en bio 👇\n\n" +
-      "#immobilierparis #luxuryrealestate #appartementparis #haussmann #bienexception #immoluxe #paris #agenceimmobiliere",
-  };
+  // Titre header
+  doc.setFont("times", "italic");
+  doc.setFontSize(9);
+  doc.setTextColor(120, 100, 70);
+  doc.text("PROPULSÉ PAR L'IA  ·  MARKETING DE PRESTIGE", W / 2, 14, { align: "center" });
+
+  doc.setFont("times", "bold");
+  doc.setFontSize(22);
+  doc.setTextColor(201, 168, 76);
+  doc.text("IMMOFLOW AI", W / 2, 26, { align: "center" });
+
+  // Ligne dorée
+  doc.setDrawColor(201, 168, 76);
+  doc.setLineWidth(0.4);
+  doc.line(margin + 20, 32, W - margin - 20, 32);
+
+  y = 52;
+
+  // ── ANNONCE PRO ──
+  doc.setFillColor(245, 242, 235);
+  doc.rect(margin - 4, y - 6, maxW + 8, 10, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(120, 100, 70);
+  doc.text("ANNONCE PROFESSIONNELLE", margin, y, {});
+  y += 8;
+
+  // Titre annonce
+  doc.setFont("times", "bold");
+  doc.setFontSize(15);
+  doc.setTextColor(40, 30, 20);
+  const titreLines = doc.splitTextToSize(result.annonce_pro.titre, maxW);
+  doc.text(titreLines, margin, y);
+  y += titreLines.length * 7 + 4;
+
+  // Description
+  doc.setFont("times", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(80, 70, 60);
+  const descLines = doc.splitTextToSize(result.annonce_pro.description, maxW);
+  doc.text(descLines, margin, y);
+  y += descLines.length * 5.5 + 6;
+
+  // Points forts
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(120, 100, 70);
+  doc.text("POINTS FORTS", margin, y);
+  y += 5;
+
+  result.annonce_pro.points_forts.forEach((pt) => {
+    doc.setFillColor(201, 168, 76);
+    doc.circle(margin + 1.5, y - 1.5, 1, "F");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(50, 40, 30);
+    const ptLines = doc.splitTextToSize(pt, maxW - 6);
+    doc.text(ptLines, margin + 5, y);
+    y += ptLines.length * 5 + 2;
+  });
+
+  y += 6;
+
+  // ── STORYBOARD ──
+  doc.setFillColor(245, 242, 235);
+  doc.rect(margin - 4, y - 6, maxW + 8, 10, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(120, 100, 70);
+  doc.text("STORYBOARD VIDÉO", margin, y);
+  y += 8;
+
+  // En-têtes tableau
+  const col1 = maxW * 0.45;
+  const col2 = maxW * 0.55;
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(120, 100, 70);
+  doc.text("CE QU'IL FAUT FILMER", margin, y);
+  doc.text("VOIX OFF", margin + col1 + 4, y);
+  y += 4;
+  doc.setDrawColor(201, 168, 76);
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, W - margin, y);
+  y += 4;
+
+  result.storyboard_video.forEach((scene, i) => {
+    const planLines = doc.splitTextToSize(scene.plan, col1 - 4);
+    const voixLines = doc.splitTextToSize(scene.voix_off, col2 - 4);
+    const rowH = Math.max(planLines.length, voixLines.length) * 4.5 + 4;
+
+    // Alternance fond
+    if (i % 2 === 0) {
+      doc.setFillColor(250, 248, 244);
+      doc.rect(margin - 2, y - 3, maxW + 4, rowH, "F");
+    }
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(180, 130, 40);
+    doc.text(planLines, margin, y);
+
+    doc.setTextColor(80, 70, 60);
+    doc.setFont("times", "italic");
+    doc.text(voixLines, margin + col1 + 4, y);
+
+    y += rowH;
+
+    doc.setDrawColor(220, 215, 200);
+    doc.setLineWidth(0.2);
+    doc.line(margin, y - 1, W - margin, y - 1);
+  });
+
+  y += 8;
+
+  // ── POST RÉSEAUX ──
+  if (y > 240) { doc.addPage(); y = 20; }
+
+  doc.setFillColor(245, 242, 235);
+  doc.rect(margin - 4, y - 6, maxW + 8, 10, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(120, 100, 70);
+  doc.text("POST RÉSEAUX SOCIAUX", margin, y);
+  y += 8;
+
+  doc.setFillColor(252, 250, 246);
+  doc.setDrawColor(201, 168, 76);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(margin - 2, y - 2, maxW + 4, 60, 2, 2, "FD");
+
+  doc.setFont("times", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(60, 50, 40);
+  const postLines = doc.splitTextToSize(result.post_reseaux, maxW - 4);
+  doc.text(postLines, margin + 2, y + 4);
+
+  y += 70;
+
+  // Footer
+  doc.setFillColor(13, 11, 9);
+  doc.rect(0, 285, W, 12, "F");
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(100, 85, 60);
+  doc.text("Généré par ImmoFlow AI  ·  Marketing de Prestige", W / 2, 292, { align: "center" });
+
+  doc.save("immoflow-annonce.pdf");
 }
 
-// ─── Sous-composants ──────────────────────────────────────────────────────────
+// ─── Icônes ───────────────────────────────────────────────────────────────────
 
 function IconFileText() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
     </svg>
   );
 }
@@ -153,6 +242,14 @@ function IconCheck() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  );
+}
+
+function IconDownload() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
     </svg>
   );
 }
@@ -237,10 +334,10 @@ const TABS: {id: TabId; label: string; icon: () => React.ReactElement}[] = [
 ];
 
 export default function ImmoFlowApp() {
-  const [notes, setNotes]       = useState("");
-  const [status, setStatus]     = useState<Status>("idle");
-  const [result, setResult]     = useState<ImmoFlowResult | null>(null);
-  const [error, setError]       = useState<string | null>(null);
+  const [notes, setNotes]         = useState("");
+  const [status, setStatus]       = useState<Status>("idle");
+  const [result, setResult]       = useState<ImmoFlowResult | null>(null);
+  const [error, setError]         = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("annonce");
 
   const handleGenerate = async () => {
@@ -249,17 +346,13 @@ export default function ImmoFlowApp() {
     setError(null);
     setResult(null);
     try {
-      // 👇 En production, remplacez mockGenerateAPI par :
-      // const res = await fetch("/api/generate", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ notes }) });
-      // if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
-      // const data = await res.json();
       const res = await fetch("/api/generate", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ notes }),
-});
-if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
-const data = await res.json();
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      const data = await res.json();
       setResult(data);
       setStatus("success");
       setActiveTab("annonce");
@@ -300,23 +393,14 @@ const data = await res.json();
             onFocus={e => (e.target.style.borderColor="#c9a84c44")}
             onBlur={e => (e.target.style.borderColor="#2a2520")}
           />
-
-          {error && (
-            <p style={{fontSize:"12px",color:"#c0624a",margin:0}}>{error}</p>
-          )}
-
+          {error && <p style={{fontSize:"12px",color:"#c0624a",margin:0}}>{error}</p>}
           <button
             onClick={handleGenerate}
             disabled={status === "loading" || !notes.trim()}
-            style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",width:"100%",padding:"14px",background: status === "loading" || !notes.trim() ? "#5a4a1a" : "#c9a84c",border:"none",borderRadius:"8px",color: status === "loading" || !notes.trim() ? "#2a2010" : "#0d0b09",fontSize:"11px",fontWeight:500,letterSpacing:"2.5px",textTransform:"uppercase",cursor:status === "loading" || !notes.trim() ? "not-allowed" : "pointer",transition:"background 0.2s",fontFamily:"inherit"}}
+            style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",width:"100%",padding:"14px",background:status==="loading"||!notes.trim()?"#5a4a1a":"#c9a84c",border:"none",borderRadius:"8px",color:status==="loading"||!notes.trim()?"#2a2010":"#0d0b09",fontSize:"11px",fontWeight:500,letterSpacing:"2.5px",textTransform:"uppercase",cursor:status==="loading"||!notes.trim()?"not-allowed":"pointer",transition:"background 0.2s",fontFamily:"inherit"}}
           >
-            {status === "loading" ? (
-              <><IconLoader />Analyse en cours...</>
-            ) : (
-              <><IconSparkles />Générer le Pack Marketing</>
-            )}
+            {status === "loading" ? (<><IconLoader />Analyse en cours...</>) : (<><IconSparkles />Générer le Pack Marketing</>)}
           </button>
-
           {status === "loading" && (
             <p style={{textAlign:"center",fontSize:"11px",letterSpacing:"1px",color:"#4a4030",margin:0}}>
               Rédaction en cours par votre consultant IA...
@@ -334,7 +418,7 @@ const data = await res.json();
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"6px",padding:"12px 8px",background:"none",border:"none",borderBottom: activeTab === id ? "2px solid #c9a84c" : "2px solid transparent",marginBottom:"-1px",color: activeTab === id ? "#c9a84c" : "#4a4030",fontSize:"10px",letterSpacing:"1.5px",textTransform:"uppercase",cursor:"pointer",fontFamily:"inherit",transition:"color 0.15s"}}
+                style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:"6px",padding:"12px 8px",background:"none",border:"none",borderBottom:activeTab===id?"2px solid #c9a84c":"2px solid transparent",marginBottom:"-1px",color:activeTab===id?"#c9a84c":"#4a4030",fontSize:"10px",letterSpacing:"1.5px",textTransform:"uppercase",cursor:"pointer",fontFamily:"inherit",transition:"color 0.15s"}}
               >
                 <Icon />{label}
               </button>
@@ -348,8 +432,8 @@ const data = await res.json();
             {activeTab === "reseaux"    && <PostPanel text={result.post_reseaux} />}
           </div>
 
-          {/* Reset */}
-          <div style={{borderTop:"0.5px solid #1e1a16",marginTop:"24px",paddingTop:"16px"}}>
+          {/* Actions */}
+          <div style={{borderTop:"0.5px solid #1e1a16",marginTop:"24px",paddingTop:"16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <button
               onClick={handleReset}
               style={{display:"flex",alignItems:"center",gap:"6px",background:"none",border:"none",cursor:"pointer",fontSize:"10px",letterSpacing:"2.5px",color:"#4a4030",textTransform:"uppercase",padding:0,fontFamily:"inherit",transition:"color 0.2s"}}
@@ -357,6 +441,16 @@ const data = await res.json();
               onMouseLeave={e => (e.currentTarget.style.color="#4a4030")}
             >
               <IconReset />Nouvelle analyse
+            </button>
+
+            {/* Bouton PDF */}
+            <button
+              onClick={() => exportPDF(result)}
+              style={{display:"flex",alignItems:"center",gap:"7px",background:"#c9a84c",border:"none",borderRadius:"7px",padding:"9px 18px",fontSize:"10px",fontWeight:500,letterSpacing:"2px",color:"#0d0b09",textTransform:"uppercase",cursor:"pointer",fontFamily:"inherit",transition:"opacity 0.2s"}}
+              onMouseEnter={e => (e.currentTarget.style.opacity="0.85")}
+              onMouseLeave={e => (e.currentTarget.style.opacity="1")}
+            >
+              <IconDownload />Exporter en PDF
             </button>
           </div>
         </div>
