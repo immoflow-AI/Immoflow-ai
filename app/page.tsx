@@ -25,31 +25,65 @@ interface ImmoFlowResult {
 type Status = "idle" | "loading" | "success" | "error";
 type TabId = "annonce" | "storyboard" | "reseaux";
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+// Supprime les emojis et caractères non supportés par jsPDF
+function stripEmojis(text: string): string {
+  return text
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu, "")
+    .replace(/[\u{2600}-\u{27FF}]/gu, "")
+    .replace(/[\u{FE00}-\u{FEFF}]/gu, "")
+    .replace(/[\u{1F900}-\u{1F9FF}]/gu, "")
+    .replace(/[^\x00-\x7E\u00C0-\u024F]/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+// Écrit du texte avec gestion automatique des nouvelles pages
+function writeTextWithPageBreak(
+  doc: jsPDF,
+  lines: string[],
+  x: number,
+  y: number,
+  lineHeight: number,
+  pageH: number,
+  margin: number
+): number {
+  for (const line of lines) {
+    if (y + lineHeight > pageH - margin) {
+      doc.addPage();
+      y = margin + 10;
+    }
+    doc.text(line, x, y);
+    y += lineHeight;
+  }
+  return y;
+}
+
 // ─── Export PDF ───────────────────────────────────────────────────────────────
 
 function exportPDF(result: ImmoFlowResult) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = 210;
+  const pageH = 297;
   const margin = 18;
   const maxW = W - margin * 2;
   let y = 0;
 
-  // Fond noir header
+  // ── Header ──
   doc.setFillColor(13, 11, 9);
   doc.rect(0, 0, W, 42, "F");
 
-  // Titre header
   doc.setFont("times", "italic");
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setTextColor(120, 100, 70);
-  doc.text("PROPULSÉ PAR L'IA  ·  MARKETING DE PRESTIGE", W / 2, 14, { align: "center" });
+  doc.text("PROPULSE PAR L'IA  .  MARKETING DE PRESTIGE", W / 2, 14, { align: "center" });
 
   doc.setFont("times", "bold");
   doc.setFontSize(22);
   doc.setTextColor(201, 168, 76);
   doc.text("IMMOFLOW AI", W / 2, 26, { align: "center" });
 
-  // Ligne dorée
   doc.setDrawColor(201, 168, 76);
   doc.setLineWidth(0.4);
   doc.line(margin + 20, 32, W - margin - 20, 32);
@@ -62,57 +96,60 @@ function exportPDF(result: ImmoFlowResult) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(120, 100, 70);
-  doc.text("ANNONCE PROFESSIONNELLE", margin, y, {});
-  y += 8;
+  doc.text("ANNONCE PROFESSIONNELLE", margin, y);
+  y += 10;
 
-  // Titre annonce
+  // Titre
   doc.setFont("times", "bold");
   doc.setFontSize(15);
   doc.setTextColor(40, 30, 20);
-  const titreLines = doc.splitTextToSize(result.annonce_pro.titre, maxW);
-  doc.text(titreLines, margin, y);
-  y += titreLines.length * 7 + 4;
+  const titreLines = doc.splitTextToSize(stripEmojis(result.annonce_pro.titre), maxW);
+  y = writeTextWithPageBreak(doc, titreLines, margin, y, 7, pageH, margin);
+  y += 4;
 
   // Description
   doc.setFont("times", "normal");
   doc.setFontSize(10);
   doc.setTextColor(80, 70, 60);
-  const descLines = doc.splitTextToSize(result.annonce_pro.description, maxW);
-  doc.text(descLines, margin, y);
-  y += descLines.length * 5.5 + 6;
+  const descLines = doc.splitTextToSize(stripEmojis(result.annonce_pro.description), maxW);
+  y = writeTextWithPageBreak(doc, descLines, margin, y, 5.5, pageH, margin);
+  y += 6;
 
   // Points forts
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(120, 100, 70);
   doc.text("POINTS FORTS", margin, y);
-  y += 5;
+  y += 6;
 
-  result.annonce_pro.points_forts.forEach((pt) => {
+  for (const pt of result.annonce_pro.points_forts) {
+    if (y > pageH - margin) { doc.addPage(); y = margin + 10; }
     doc.setFillColor(201, 168, 76);
     doc.circle(margin + 1.5, y - 1.5, 1, "F");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(50, 40, 30);
-    const ptLines = doc.splitTextToSize(pt, maxW - 6);
-    doc.text(ptLines, margin + 5, y);
-    y += ptLines.length * 5 + 2;
-  });
+    const ptLines = doc.splitTextToSize(stripEmojis(pt), maxW - 6);
+    y = writeTextWithPageBreak(doc, ptLines, margin + 5, y, 5, pageH, margin);
+    y += 2;
+  }
 
-  y += 6;
+  y += 8;
 
   // ── STORYBOARD ──
+  if (y > pageH - 40) { doc.addPage(); y = 20; }
+
   doc.setFillColor(245, 242, 235);
   doc.rect(margin - 4, y - 6, maxW + 8, 10, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(120, 100, 70);
-  doc.text("STORYBOARD VIDÉO", margin, y);
-  y += 8;
+  doc.text("STORYBOARD VIDEO", margin, y);
+  y += 10;
 
-  // En-têtes tableau
   const col1 = maxW * 0.45;
   const col2 = maxW * 0.55;
+
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(120, 100, 70);
@@ -122,14 +159,15 @@ function exportPDF(result: ImmoFlowResult) {
   doc.setDrawColor(201, 168, 76);
   doc.setLineWidth(0.3);
   doc.line(margin, y, W - margin, y);
-  y += 4;
+  y += 5;
 
   result.storyboard_video.forEach((scene, i) => {
-    const planLines = doc.splitTextToSize(scene.plan, col1 - 4);
-    const voixLines = doc.splitTextToSize(scene.voix_off, col2 - 4);
-    const rowH = Math.max(planLines.length, voixLines.length) * 4.5 + 4;
+    const planLines = doc.splitTextToSize(stripEmojis(scene.plan), col1 - 4);
+    const voixLines = doc.splitTextToSize(stripEmojis(scene.voix_off), col2 - 4);
+    const rowH = Math.max(planLines.length, voixLines.length) * 4.5 + 5;
 
-    // Alternance fond
+    if (y + rowH > pageH - margin) { doc.addPage(); y = margin + 10; }
+
     if (i % 2 === 0) {
       doc.setFillColor(250, 248, 244);
       doc.rect(margin - 2, y - 3, maxW + 4, rowH, "F");
@@ -137,7 +175,7 @@ function exportPDF(result: ImmoFlowResult) {
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.setTextColor(180, 130, 40);
+    doc.setTextColor(160, 120, 40);
     doc.text(planLines, margin, y);
 
     doc.setTextColor(80, 70, 60);
@@ -145,45 +183,56 @@ function exportPDF(result: ImmoFlowResult) {
     doc.text(voixLines, margin + col1 + 4, y);
 
     y += rowH;
-
     doc.setDrawColor(220, 215, 200);
     doc.setLineWidth(0.2);
     doc.line(margin, y - 1, W - margin, y - 1);
   });
 
-  y += 8;
+  y += 10;
 
   // ── POST RÉSEAUX ──
-  if (y > 240) { doc.addPage(); y = 20; }
+  if (y > pageH - 60) { doc.addPage(); y = 20; }
 
   doc.setFillColor(245, 242, 235);
   doc.rect(margin - 4, y - 6, maxW + 8, 10, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(120, 100, 70);
-  doc.text("POST RÉSEAUX SOCIAUX", margin, y);
-  y += 8;
+  doc.text("POST RESEAUX SOCIAUX", margin, y);
+  y += 10;
+
+  // Nettoyer le post et mesurer la hauteur réelle
+  const postClean = stripEmojis(result.post_reseaux);
+  const postLines = doc.splitTextToSize(postClean, maxW - 6);
+  const postH = postLines.length * 5.5 + 12;
+
+  // Nouvelle page si pas assez de place
+  if (y + postH > pageH - 20) { doc.addPage(); y = 20; }
 
   doc.setFillColor(252, 250, 246);
   doc.setDrawColor(201, 168, 76);
   doc.setLineWidth(0.3);
-  doc.roundedRect(margin - 2, y - 2, maxW + 4, 60, 2, 2, "FD");
+  doc.roundedRect(margin - 2, y - 2, maxW + 4, postH, 2, 2, "FD");
 
   doc.setFont("times", "normal");
   doc.setFontSize(10);
   doc.setTextColor(60, 50, 40);
-  const postLines = doc.splitTextToSize(result.post_reseaux, maxW - 4);
-  doc.text(postLines, margin + 2, y + 4);
+  y = writeTextWithPageBreak(doc, postLines, margin + 2, y + 4, 5.5, pageH, margin);
 
-  y += 70;
-
-  // Footer
-  doc.setFillColor(13, 11, 9);
-  doc.rect(0, 285, W, 12, "F");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(100, 85, 60);
-  doc.text("Généré par ImmoFlow AI  ·  Marketing de Prestige", W / 2, 292, { align: "center" });
+  // ── Footer sur chaque page ──
+  const totalPages = (doc as jsPDF & { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFillColor(13, 11, 9);
+    doc.rect(0, 285, W, 12, "F");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(100, 85, 60);
+    doc.text(
+      `Genere par ImmoFlow AI  .  Marketing de Prestige  .  Page ${p}/${totalPages}`,
+      W / 2, 292, { align: "center" }
+    );
+  }
 
   doc.save("immoflow-annonce.pdf");
 }
@@ -412,7 +461,6 @@ export default function ImmoFlowApp() {
       {/* Output zone */}
       {status === "success" && result && (
         <div>
-          {/* Tabs */}
           <div style={{display:"flex",borderBottom:"0.5px solid #2a2520",marginBottom:"0"}}>
             {TABS.map(({id, label, icon: Icon}) => (
               <button
@@ -425,14 +473,12 @@ export default function ImmoFlowApp() {
             ))}
           </div>
 
-          {/* Panel content */}
           <div style={{paddingTop:"24px",minHeight:"280px"}}>
             {activeTab === "annonce"    && <AnnoncePanel data={result.annonce_pro} />}
             {activeTab === "storyboard" && <StoryboardPanel scenes={result.storyboard_video} />}
             {activeTab === "reseaux"    && <PostPanel text={result.post_reseaux} />}
           </div>
 
-          {/* Actions */}
           <div style={{borderTop:"0.5px solid #1e1a16",marginTop:"24px",paddingTop:"16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <button
               onClick={handleReset}
@@ -443,7 +489,6 @@ export default function ImmoFlowApp() {
               <IconReset />Nouvelle analyse
             </button>
 
-            {/* Bouton PDF */}
             <button
               onClick={() => exportPDF(result)}
               style={{display:"flex",alignItems:"center",gap:"7px",background:"#c9a84c",border:"none",borderRadius:"7px",padding:"9px 18px",fontSize:"10px",fontWeight:500,letterSpacing:"2px",color:"#0d0b09",textTransform:"uppercase",cursor:"pointer",fontFamily:"inherit",transition:"opacity 0.2s"}}
