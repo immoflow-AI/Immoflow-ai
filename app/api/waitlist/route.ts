@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     // Email de notification à vous (l'admin)
     await resend.emails.send({
       from: "ImmoFlow AI <onboarding@resend.dev>",
-      to: "gcoulonpro18@gmail.com", // 👈 Remplacez par votre email
+      to: "gcoulon18@gmail.com", // 👈 Remplacez par votre email
       subject: "✦ Nouvelle inscription — Liste d'attente ImmoFlow AI",
       html: `
         <div style="font-family:Georgia,serif;max-width:500px;margin:0 auto;padding:2rem;background:#0d0b09;color:#e0d8cc;border-radius:12px;">
