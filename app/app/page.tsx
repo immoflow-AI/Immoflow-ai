@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import jsPDF from "jspdf";
+import { useUser } from "@clerk/nextjs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -385,6 +386,7 @@ const TABS: {id: TabId; label: string; icon: () => React.ReactElement}[] = [
 export default function ImmoFlowApp() {
   const [notes, setNotes]         = useState("");
 const [luxeMode, setLuxeMode] = useState(false);
+const { user } = useUser();
   const [status, setStatus]       = useState<Status>("idle");
   const [result, setResult]       = useState<ImmoFlowResult | null>(null);
   const [error, setError]         = useState<string | null>(null);
@@ -399,7 +401,7 @@ const [luxeMode, setLuxeMode] = useState(false);
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes, mode: luxeMode ? "luxe" : "standard" }),
+        body: JSON.stringify({ notes, mode: luxeMode ? "luxe" : "standard", userId: user?.id, plan: user?.publicMetadata?.plan || "free" }),: luxeMode ? "luxe" : "standard" }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
       const data = await res.json();

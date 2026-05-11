@@ -1,5 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
+import { Redis } from "@upstash/redis";
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
+
+// ─── Limites par plan ─────────────────────────────────────────────────────────
+
+const PLAN_LIMITS: Record<string, number> = {
+  solo:     15,
+  prestige: Infinity,
+  agence:   Infinity,
+  free:     2,
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,7 +35,7 @@ export interface ImmoFlowResult {
   post_reseaux: string;
 }
 
-// ─── System Prompt STANDARD (Plan Solo) ──────────────────────────────────────
+// ─── System Prompt STANDARD (Plan Solo + Free) ───────────────────────────────
 
 const SYSTEM_PROMPT_STANDARD = `Tu es un consultant senior en marketing immobilier de prestige pour l'une des meilleures agences parisiennes du marché du luxe. Depuis 20 ans, tu transformes des biens d'exception en récits inoubliables.
 
@@ -64,7 +79,7 @@ STRUCTURE JSON EXACTE À RETOURNER :
   "post_reseaux": "Post Instagram/Facebook. 5-7 lignes. Accroche émotionnelle, 2-3 points clés avec emojis, appel à l'action discret, 4-6 hashtags pertinents en fin de post."
 }`;
 
-// ─── System Prompt LUXE PRESTIGE (Plan Prestige) ─────────────────────────────
+// ─── System Prompt LUXE PRESTIGE ─────────────────────────────────────────────
 
 const SYSTEM_PROMPT_LUXE = `Tu es le directeur artistique d'une maison de vente aux enchères de prestige — entre Sotheby's et Christie's — spécialisé dans l'immobilier d'exception mondiale. Tu as vendu des penthouses à Monaco, des villas à Cap-Ferret, des hôtels particuliers à Paris. Chaque bien que tu présentes devient un objet de désir absolu.
 
@@ -75,13 +90,6 @@ TON STYLE EST UNIQUE ET EXCLUSIF :
 - Chaque phrase doit créer une image mentale immédiate et désirable
 - Tu identifies et valorises ce qui est UNIQUE dans chaque bien — jamais de généralités
 - Tu parles à un acheteur qui possède déjà tout — tu dois lui vendre un sentiment, une identité, un statut
-
-DIFFÉRENCES AVEC UN PROMPT STANDARD :
-- Descriptions 2x plus évocatrices et sensorielles
-- Storyboard cinématographique avec indications de lumière, musique d'ambiance suggérée
-- Post réseaux avec storytelling émotionnel profond, pas juste des bullet points
-- Analyse des détails architecturaux rares et leur valorisation
-- Ton narratif à la première personne du narrateur omniscient
 
 RÈGLES ABSOLUES :
 - Réponds UNIQUEMENT avec un objet JSON valide
@@ -122,7 +130,7 @@ STRUCTURE JSON EXACTE À RETOURNER :
 
 export async function POST(req: NextRequest) {
   try {
-    const { notes, mode } = await req.json();
+    const { notes, mode, userId, plan } = await req.json();
 
     if (!notes || typeof notes !== "string" || notes.trim().length === 0) {
       return NextResponse.json(
@@ -131,14 +139,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (notes.trim().length < 10) {
-      return NextResponse.json(
-        { error: "Les notes sont trop courtes. Ajoutez plus de détails sur le bien." },
-        { status: 400 }
-      );
+    // ── Vérification de la limite d'annonces ──
+    if (userId) {
+      const userPlan = plan || "free";
+      const limit = PLAN_LIMITS[userPlan] ?? 2;
+
+      if (limit !== Infinity) {
+        // Clé Redis : reset chaque mois
+        const month = new Date().toISOString().slice(0, 7); // "2026-05"
+        const key = `usage:${userId}:${month}`;
+
+        const current = await redis.get<number>(key) || 0;
+
+        if (current >= limit) {
+          return NextResponse.json(
+            {
+              error: `Limite atteinte. Votre plan ${userPlan} inclut ${limit} annonces/mois. Passez au plan supérieur pour continuer.`,
+              limitReached: true,
+            },
+            { status: 403 }
+          );
+        }
+
+        // Incrémenter le compteur
+        await redis.incr(key);
+        // Expire après 35 jours
+        await redis.expire(key, 35 * 24 * 60 * 60);
+      }
     }
 
-    // Sélection du prompt selon le mode
+    // ── Sélection du prompt ──
     const systemPrompt = mode === "luxe" ? SYSTEM_PROMPT_LUXE : SYSTEM_PROMPT_STANDARD;
 
     const client = new Groq();
@@ -172,7 +202,6 @@ export async function POST(req: NextRequest) {
     try {
       result = JSON.parse(cleanJson);
     } catch {
-      console.error("Erreur de parsing JSON. Réponse brute :", rawText);
       return NextResponse.json(
         { error: "L'IA a retourné une réponse invalide. Réessayez." },
         { status: 500 }
@@ -192,18 +221,12 @@ export async function POST(req: NextRequest) {
     console.error("Erreur API ImmoFlow/Groq:", error);
 
     if (error && typeof error === "object" && "status" in error) {
-      const apiError = error as { status: number; message?: string };
+      const apiError = error as { status: number };
       if (apiError.status === 401) {
-        return NextResponse.json(
-          { error: "Clé API Groq invalide. Vérifiez votre fichier .env.local." },
-          { status: 401 }
-        );
+        return NextResponse.json({ error: "Clé API invalide." }, { status: 401 });
       }
       if (apiError.status === 429) {
-        return NextResponse.json(
-          { error: "Limite de requêtes Groq atteinte. Patientez quelques secondes." },
-          { status: 429 }
-        );
+        return NextResponse.json({ error: "Limite de requêtes atteinte. Patientez." }, { status: 429 });
       }
     }
 
