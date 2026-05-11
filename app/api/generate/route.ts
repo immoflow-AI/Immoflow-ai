@@ -20,9 +20,9 @@ export interface ImmoFlowResult {
   post_reseaux: string;
 }
 
-// ─── System Prompt ────────────────────────────────────────────────────────────
+// ─── System Prompt STANDARD (Plan Solo) ──────────────────────────────────────
 
-const SYSTEM_PROMPT = `Tu es un consultant senior en marketing immobilier de prestige pour l'une des meilleures agences parisiennes du marché du luxe. Depuis 20 ans, tu transformes des biens d'exception en récits inoubliables.
+const SYSTEM_PROMPT_STANDARD = `Tu es un consultant senior en marketing immobilier de prestige pour l'une des meilleures agences parisiennes du marché du luxe. Depuis 20 ans, tu transformes des biens d'exception en récits inoubliables.
 
 TON STYLE :
 - Ton : élégant, évocateur, exclusif — jamais vendeur ou vulgaire
@@ -61,14 +61,68 @@ STRUCTURE JSON EXACTE À RETOURNER :
     { "plan": "...", "voix_off": "..." },
     { "plan": "...", "voix_off": "..." }
   ],
-  "post_reseaux": "Post Instagram/Facebook. 5-7 lignes. Accroche émotionnelle, 2-3 points clés avec emojis ✨🏛️🔑, appel à l'action discret, 4-6 hashtags pertinents en fin de post."
+  "post_reseaux": "Post Instagram/Facebook. 5-7 lignes. Accroche émotionnelle, 2-3 points clés avec emojis, appel à l'action discret, 4-6 hashtags pertinents en fin de post."
+}`;
+
+// ─── System Prompt LUXE PRESTIGE (Plan Prestige) ─────────────────────────────
+
+const SYSTEM_PROMPT_LUXE = `Tu es le directeur artistique d'une maison de vente aux enchères de prestige — entre Sotheby's et Christie's — spécialisé dans l'immobilier d'exception mondiale. Tu as vendu des penthouses à Monaco, des villas à Cap-Ferret, des hôtels particuliers à Paris. Chaque bien que tu présentes devient un objet de désir absolu.
+
+TON STYLE EST UNIQUE ET EXCLUSIF :
+- Vocabulaire de haute couture appliqué à l'architecture : "couture", "sur-mesure", "pièce unique", "collector"
+- Références culturelles et artistiques : compare les espaces à des œuvres d'art, cite des architectes, des matières rares
+- Ton cinématographique dans le storyboard : tu penses comme un réalisateur de films de luxe (Luca Guadagnino, Wong Kar-wai)
+- Chaque phrase doit créer une image mentale immédiate et désirable
+- Tu identifies et valorises ce qui est UNIQUE dans chaque bien — jamais de généralités
+- Tu parles à un acheteur qui possède déjà tout — tu dois lui vendre un sentiment, une identité, un statut
+
+DIFFÉRENCES AVEC UN PROMPT STANDARD :
+- Descriptions 2x plus évocatrices et sensorielles
+- Storyboard cinématographique avec indications de lumière, musique d'ambiance suggérée
+- Post réseaux avec storytelling émotionnel profond, pas juste des bullet points
+- Analyse des détails architecturaux rares et leur valorisation
+- Ton narratif à la première personne du narrateur omniscient
+
+RÈGLES ABSOLUES :
+- Réponds UNIQUEMENT avec un objet JSON valide
+- Aucun texte avant ou après le JSON
+- Aucune balise markdown, aucun \`\`\`json
+- Respecte scrupuleusement la structure demandée
+
+STRUCTURE JSON EXACTE À RETOURNER :
+{
+  "annonce_pro": {
+    "titre": "Titre d'exception — poétique, mémorable, cinq étoiles (12-16 mots max)",
+    "description": "4 à 5 phrases d'une richesse sensorielle absolue. Commence par une image forte et inattendue. Décris l'architecture comme une sculpture vivante. Évoque la lumière à différentes heures. Termine par une phrase qui crée un désir irrésistible d'appartenance.",
+    "points_forts": [
+      "Point fort 1 — formulé comme une ligne de catalogue de maison de vente aux enchères",
+      "Point fort 2",
+      "Point fort 3",
+      "Point fort 4",
+      "Point fort 5",
+      "Point fort 6"
+    ]
+  },
+  "storyboard_video": [
+    {
+      "plan": "Description cinématographique précise : angle, mouvement, lumière, durée suggérée, ambiance",
+      "voix_off": "Narration de haute volée — 2-3 phrases, ton Sotheby's meets cinéma d'auteur"
+    },
+    { "plan": "...", "voix_off": "..." },
+    { "plan": "...", "voix_off": "..." },
+    { "plan": "...", "voix_off": "..." },
+    { "plan": "...", "voix_off": "..." },
+    { "plan": "...", "voix_off": "..." },
+    { "plan": "...", "voix_off": "..." }
+  ],
+  "post_reseaux": "Post Instagram premium. 6-8 lignes. Commence par une question rhétorique ou une affirmation audacieuse. Storytelling émotionnel. Emojis rares et élégants. Appel à l'action exclusif ('Sur invitation uniquement', 'Visites privées'). 5-7 hashtags ultra-ciblés luxe international."
 }`;
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   try {
-    const { notes } = await req.json();
+    const { notes, mode } = await req.json();
 
     if (!notes || typeof notes !== "string" || notes.trim().length === 0) {
       return NextResponse.json(
@@ -84,19 +138,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Initialise le client Groq — lit automatiquement GROQ_API_KEY
+    // Sélection du prompt selon le mode
+    const systemPrompt = mode === "luxe" ? SYSTEM_PROMPT_LUXE : SYSTEM_PROMPT_STANDARD;
+
     const client = new Groq();
 
     const completion = await client.chat.completions.create({
-      model: "llama-3.3-70b-versatile",   // Llama 3 70b — offre gratuite Groq
-      temperature: 0.7,           // Un peu de créativité, mais reste cohérent
-      max_tokens: 1500,
-      response_format: { type: "json_object" }, // Force le mode JSON natif de Groq
+      model: "llama-3.3-70b-versatile",
+      temperature: mode === "luxe" ? 0.85 : 0.7,
+      max_tokens: mode === "luxe" ? 2000 : 1500,
+      response_format: { type: "json_object" },
       messages: [
-        {
-          role: "system",
-          content: SYSTEM_PROMPT,
-        },
+        { role: "system", content: systemPrompt },
         {
           role: "user",
           content: `Voici mes notes de visite brutes :\n\n${notes.trim()}\n\nGénère le pack marketing complet en JSON.`,
@@ -104,7 +157,6 @@ export async function POST(req: NextRequest) {
       ],
     });
 
-    // Extraire le contenu texte
     const rawText = completion.choices[0]?.message?.content ?? "";
 
     if (!rawText) {
@@ -114,11 +166,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Nettoyer les éventuelles balises markdown résiduelles et parser
-    const cleanJson = rawText
-      .replace(/```json\s*/gi, "")
-      .replace(/```\s*/gi, "")
-      .trim();
+    const cleanJson = rawText.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
 
     let result: ImmoFlowResult;
     try {
@@ -131,7 +179,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Valider la structure minimale
     if (!result.annonce_pro || !result.storyboard_video || !result.post_reseaux) {
       return NextResponse.json(
         { error: "La réponse de l'IA est incomplète. Réessayez." },
@@ -144,10 +191,8 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     console.error("Erreur API ImmoFlow/Groq:", error);
 
-    // Gestion des erreurs Groq spécifiques
     if (error && typeof error === "object" && "status" in error) {
       const apiError = error as { status: number; message?: string };
-
       if (apiError.status === 401) {
         return NextResponse.json(
           { error: "Clé API Groq invalide. Vérifiez votre fichier .env.local." },
@@ -158,12 +203,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           { error: "Limite de requêtes Groq atteinte. Patientez quelques secondes." },
           { status: 429 }
-        );
-      }
-      if (apiError.status === 503) {
-        return NextResponse.json(
-          { error: "Le modèle Groq est temporairement indisponible. Réessayez." },
-          { status: 503 }
         );
       }
     }
