@@ -384,6 +384,7 @@ const TABS: {id: TabId; label: string; icon: () => React.ReactElement}[] = [
 
 export default function ImmoFlowApp() {
   const [notes, setNotes]         = useState("");
+const [luxeMode, setLuxeMode] = useState(false);
   const [status, setStatus]       = useState<Status>("idle");
   const [result, setResult]       = useState<ImmoFlowResult | null>(null);
   const [error, setError]         = useState<string | null>(null);
@@ -398,7 +399,7 @@ export default function ImmoFlowApp() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes }),
+        body: JSON.stringify({ notes, mode: luxeMode ? "luxe" : "standard" }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
       const data = await res.json();
@@ -430,7 +431,7 @@ export default function ImmoFlowApp() {
         <p style={{fontSize:"10px",letterSpacing:"3px",color:"#4a4030",textTransform:"uppercase",margin:0}}>Marketing de Prestige</p>
       </div>
 
-      {/* Input zone */}
+    {/* Input zone */}
       {status !== "success" && (
         <div style={{display:"flex",flexDirection:"column",gap:"12px"}}>
           <textarea
@@ -443,16 +444,25 @@ export default function ImmoFlowApp() {
             onBlur={e => (e.target.style.borderColor="#2a2520")}
           />
           {error && <p style={{fontSize:"12px",color:"#c0624a",margin:0}}>{error}</p>}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"#141210",border:"0.5px solid #2a2520",borderRadius:"8px",padding:"12px 16px"}}>
+            <div>
+              <p style={{fontSize:"12px",color:"#c9a84c",margin:"0 0 2px",fontFamily:"Georgia,serif"}}>✦ Analyse de Style Luxe</p>
+              <p style={{fontSize:"11px",color:"#4a4030",margin:0}}>Prompt exclusif Plan Prestige</p>
+            </div>
+            <div onClick={() => setLuxeMode(!luxeMode)} style={{width:"44px",height:"24px",borderRadius:"12px",background:luxeMode?"#c9a84c":"#2a2520",cursor:"pointer",position:"relative",transition:"background 0.2s",flexShrink:0}}>
+              <div style={{position:"absolute",top:"3px",left:luxeMode?"22px":"3px",width:"18px",height:"18px",borderRadius:"50%",background:"#fff",transition:"left 0.2s"}} />
+            </div>
+          </div>
           <button
             onClick={handleGenerate}
             disabled={status === "loading" || !notes.trim()}
             style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",width:"100%",padding:"14px",background:status==="loading"||!notes.trim()?"#5a4a1a":"#c9a84c",border:"none",borderRadius:"8px",color:status==="loading"||!notes.trim()?"#2a2010":"#0d0b09",fontSize:"11px",fontWeight:500,letterSpacing:"2.5px",textTransform:"uppercase",cursor:status==="loading"||!notes.trim()?"not-allowed":"pointer",transition:"background 0.2s",fontFamily:"inherit"}}
           >
-            {status === "loading" ? (<><IconLoader />Analyse en cours...</>) : (<><IconSparkles />Générer le Pack Marketing</>)}
+            {status === "loading" ? (<><IconLoader />Analyse en cours...</>) : (<><IconSparkles />{luxeMode ? "Générer — Style Luxe ✦" : "Générer le Pack Marketing"}</>)}
           </button>
           {status === "loading" && (
             <p style={{textAlign:"center",fontSize:"11px",letterSpacing:"1px",color:"#4a4030",margin:0}}>
-              Rédaction en cours par votre consultant IA...
+              {luxeMode ? "Analyse Luxe en cours — Sotheby's style..." : "Rédaction en cours par votre consultant IA..."}
             </p>
           )}
         </div>
