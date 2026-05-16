@@ -164,7 +164,7 @@ export default function LandingPage() {
           <div className="card">
             <p style={{fontSize:"10px",letterSpacing:"3px",color:"#5a5040",textTransform:"uppercase",margin:"0 0 12px"}}>Starter</p>
             <div style={{display:"flex",alignItems:"baseline",gap:"4px",margin:"0 0 6px"}}>
-              <span style={{fontFamily:"Georgia,serif",fontSize:"36px",color:"#e8dcc8",fontWeight:400}}>29€</span>
+              <span style={{fontFamily:"Georgia,serif",fontSize:"36px",color:"#e8dcc8",fontWeight:400}}>39,99€</span>
               <span style={{fontSize:"12px",color:"#5a5040"}}>/mois</span>
             </div>
             <p style={{fontSize:"12px",color:"#5a5040",margin:"0 0 1.5rem"}}>Idéal pour démarrer</p>
@@ -186,7 +186,7 @@ export default function LandingPage() {
             </div>
             <p style={{fontSize:"10px",letterSpacing:"3px",color:"#c9a84c",textTransform:"uppercase",margin:"0 0 12px"}}>Pro</p>
             <div style={{display:"flex",alignItems:"baseline",gap:"4px",margin:"0 0 6px"}}>
-              <span style={{fontFamily:"Georgia,serif",fontSize:"36px",color:"#c9a84c",fontWeight:400}}>49€</span>
+              <span style={{fontFamily:"Georgia,serif",fontSize:"36px",color:"#c9a84c",fontWeight:400}}>79,99€</span>
               <span style={{fontSize:"12px",color:"#5a5040"}}>/mois</span>
             </div>
             <p style={{fontSize:"12px",color:"#5a5040",margin:"0 0 1.5rem"}}>Pour les agents actifs</p>
@@ -205,7 +205,7 @@ export default function LandingPage() {
           <div className="card">
             <p style={{fontSize:"10px",letterSpacing:"3px",color:"#5a5040",textTransform:"uppercase",margin:"0 0 12px"}}>Agence</p>
             <div style={{display:"flex",alignItems:"baseline",gap:"4px",margin:"0 0 6px"}}>
-              <span style={{fontFamily:"Georgia,serif",fontSize:"36px",color:"#e8dcc8",fontWeight:400}}>149€</span>
+              <span style={{fontFamily:"Georgia,serif",fontSize:"36px",color:"#e8dcc8",fontWeight:400}}>199€</span>
               <span style={{fontSize:"12px",color:"#5a5040"}}>/mois</span>
             </div>
             <p style={{fontSize:"12px",color:"#5a5040",margin:"0 0 1.5rem"}}>Pour toute votre équipe</p>
