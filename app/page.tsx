@@ -345,7 +345,7 @@ export default function LandingPage() {
               <span className="serif" style={{fontSize:"56px",color:"#f0ece4",fontWeight:300,letterSpacing:"-0.03em"}}>39,99€</span>
               <span style={{fontSize:"13px",color:"rgba(232,228,220,0.4)",marginLeft:"8px"}}>/ mois</span>
             </div>
-            <p style={{fontSize:"13px",color:"rgba(232,228,220,0.45)",margin:"0 0 2.5rem",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",fontSize:"16px",fontWeight:300}}>L'agent indépendant qui débute</p>
+           <p style={{color:"rgba(232,228,220,0.45)",margin:"0 0 2.5rem",fontStyle:"italic",fontFamily:"'Cormorant Garamond',serif",fontSize:"16px",fontWeight:300}}>L&apos;agent indépendant qui débute</p>
 
             <div style={{height:"1px",background:"rgba(255,255,255,0.05)",margin:"0 0 2rem"}} />
 
