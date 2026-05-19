@@ -17,14 +17,24 @@ interface StoryboardScene {
   voix_off: string;
 }
 
+interface RapportData {
+  accroche_portails: string;
+  pitch_agent: string;
+}
+
 interface ImmoFlowResult {
   annonce_pro: AnnonceProData;
   storyboard_video: StoryboardScene[];
   post_reseaux: string;
+  post_instagram?: string;
+  post_linkedin?: string;
+  post_facebook?: string;
+  variante_b?: AnnonceProData;
+  rapport?: RapportData;
 }
 
 type Status = "idle" | "loading" | "success" | "error";
-type TabId = "annonce" | "storyboard" | "reseaux";
+type TabId = "annonce" | "storyboard" | "reseaux" | "instagram" | "linkedin" | "facebook" | "variante" | "rapport" | "historique";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -713,6 +723,54 @@ function IconDownload() {
   );
 }
 
+function IconInstagram() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="3.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+    </svg>
+  );
+}
+
+function IconLinkedin() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/>
+    </svg>
+  );
+}
+
+function IconFacebook() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+    </svg>
+  );
+}
+
+function IconCopy() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </svg>
+  );
+}
+
+function IconRapport() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+    </svg>
+  );
+}
+
+function IconClock() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    </svg>
+  );
+}
+
 // ─── Panels ───────────────────────────────────────────────────────────────────
 
 function AnnoncePanel({ data }: { data: AnnonceProData }) {
@@ -792,13 +850,127 @@ function PostPanel({ text }: { text: string }) {
   );
 }
 
-// ─── App principale ───────────────────────────────────────────────────────────
+function PostPlatformPanel({ text, platform }: { text: string; platform: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2200);
+  };
+  const colors: Record<string, string> = {
+    Instagram: "#e1306c",
+    LinkedIn: "#0077b5",
+    Facebook: "#1877f2",
+  };
+  const color = colors[platform] ?? "#c9a84c";
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:"20px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:"10px",marginBottom:"4px"}}>
+        <div style={{width:"8px",height:"8px",borderRadius:"50%",background:color,boxShadow:`0 0 8px ${color}80`}} />
+        <span className="mono" style={{color:"rgba(232,228,220,0.45)",fontSize:"9px"}}>{platform.toUpperCase()}</span>
+      </div>
+      <div style={{position:"relative",background:"linear-gradient(180deg,rgba(255,255,255,0.02) 0%,rgba(0,0,0,0.2) 100%)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"16px",padding:"32px",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:"60%",height:"1px",background:`linear-gradient(90deg,transparent,${color}50,transparent)`}} />
+        <pre style={{whiteSpace:"pre-wrap",fontFamily:"'Inter',sans-serif",fontWeight:300,fontSize:"15px",color:"rgba(232,228,220,0.85)",lineHeight:1.85,margin:0}}>{text}</pre>
+      </div>
+      <button onClick={handleCopy} className="btn-ghost" style={{alignSelf:"flex-start",padding:"12px 24px",fontSize:"10px",color:copied?"#e8c87c":undefined,borderColor:copied?"rgba(201,168,76,0.3)":undefined}}>
+        {copied ? <IconCheck /> : <IconCopy />}
+        <span>{copied ? "Texte copié" : "Copier le texte"}</span>
+      </button>
+    </div>
+  );
+}
 
-const TABS: {id: TabId; label: string; icon: () => React.ReactElement}[] = [
-  {id:"annonce",   label:"Annonce",      icon: IconFileText},
-  {id:"storyboard",label:"Storyboard",   icon: IconFilm},
-  {id:"reseaux",   label:"Réseaux",      icon: IconShare},
-];
+function VariantePanel({ data }: { data: AnnonceProData }) {
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:"28px"}}>
+      <div style={{padding:"10px 16px",background:"rgba(201,168,76,0.06)",border:"1px solid rgba(201,168,76,0.15)",borderRadius:"8px",display:"inline-flex",alignItems:"center",gap:"8px",alignSelf:"flex-start"}}>
+        <span className="mono" style={{color:"#c9a84c",fontSize:"9px"}}>Variante B — Angle alternatif</span>
+      </div>
+      <div>
+        <p className="mono" style={{color:"#c9a84c",marginBottom:"1rem"}}>— Titre alternatif —</p>
+        <h2 className="serif" style={{fontSize:"clamp(24px,3.5vw,34px)",fontWeight:300,color:"#f0ece4",lineHeight:1.15,margin:0,letterSpacing:"-0.01em"}}>{data.titre}</h2>
+      </div>
+      <div style={{height:"1px",background:"linear-gradient(90deg,rgba(201,168,76,0.25),transparent)"}} />
+      <p className="serif" style={{fontSize:"17px",color:"rgba(232,228,220,0.78)",lineHeight:1.75,margin:0,fontWeight:300,fontStyle:"italic"}}>{data.description}</p>
+      <div style={{borderTop:"1px solid rgba(255,255,255,0.05)",paddingTop:"24px",display:"flex",flexDirection:"column",gap:"14px"}}>
+        <p className="mono" style={{color:"rgba(232,228,220,0.4)",margin:"0 0 8px"}}>Points forts alternatifs</p>
+        {data.points_forts.map((pt, i) => (
+          <div key={i} style={{display:"flex",alignItems:"flex-start",gap:"14px"}}>
+            <div className="serif gold-text" style={{fontSize:"14px",fontStyle:"italic",fontWeight:300,minWidth:"24px",lineHeight:1.5}}>{String.fromCharCode(8544 + i)}</div>
+            <span style={{fontSize:"14px",color:"rgba(232,228,220,0.75)",lineHeight:1.65,fontWeight:300}}>{pt}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RapportPanel({ data }: { data: RapportData }) {
+  const [copiedPortail, setCopiedPortail] = useState(false);
+  const [copiedPitch, setCopiedPitch] = useState(false);
+  const charCount = data.accroche_portails?.length ?? 0;
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:"32px"}}>
+      <div>
+        <p className="mono" style={{color:"#c9a84c",marginBottom:"16px"}}>Accroche portails immobiliers</p>
+        <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(201,168,76,0.15)",borderRadius:"12px",padding:"24px",position:"relative"}}>
+          <p style={{fontSize:"18px",color:"#f0ece4",lineHeight:1.5,margin:"0 0 16px",fontWeight:300}}>{data.accroche_portails}</p>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <span className="mono" style={{color:charCount > 60 ? "#c0624a" : "rgba(232,228,220,0.3)",fontSize:"9px"}}>{charCount} / 60 caractères</span>
+            <button onClick={() => { navigator.clipboard.writeText(data.accroche_portails); setCopiedPortail(true); setTimeout(() => setCopiedPortail(false), 2200); }} className="btn-ghost" style={{padding:"8px 16px",fontSize:"9px",color:copiedPortail?"#e8c87c":undefined}}>
+              {copiedPortail ? <IconCheck /> : <IconCopy />}
+              <span>{copiedPortail ? "Copié" : "Copier"}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div style={{height:"1px",background:"linear-gradient(90deg,transparent,rgba(201,168,76,0.15),transparent)"}} />
+      <div>
+        <p className="mono" style={{color:"#c9a84c",marginBottom:"16px"}}>Pitch agent — 30 secondes</p>
+        <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"12px",padding:"24px"}}>
+          <p className="serif" style={{fontSize:"16px",color:"rgba(232,228,220,0.85)",lineHeight:1.8,margin:"0 0 20px",fontStyle:"italic",fontWeight:300}}>{data.pitch_agent}</p>
+          <button onClick={() => { navigator.clipboard.writeText(data.pitch_agent); setCopiedPitch(true); setTimeout(() => setCopiedPitch(false), 2200); }} className="btn-ghost" style={{padding:"8px 16px",fontSize:"9px",color:copiedPitch?"#e8c87c":undefined}}>
+            {copiedPitch ? <IconCheck /> : <IconCopy />}
+            <span>{copiedPitch ? "Copié" : "Copier"}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HistoriquePanel({ entries, loading }: { entries: {id: number; date: string; titre: string; plan: string}[]; loading: boolean }) {
+  const planColors: Record<string, string> = { agence: "#c9a84c", prestige: "#a0a0a0", solo: "#4a4a4a", free: "#3a3a3a" };
+  if (loading) return (
+    <div style={{display:"flex",justifyContent:"center",alignItems:"center",height:"200px"}}>
+      <IconLoader />
+    </div>
+  );
+  if (entries.length === 0) return (
+    <div style={{textAlign:"center",padding:"60px 20px"}}>
+      <p className="serif" style={{color:"rgba(232,228,220,0.35)",fontSize:"17px",fontStyle:"italic",fontWeight:300}}>Aucune génération pour le moment</p>
+    </div>
+  );
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:"0",border:"1px solid rgba(255,255,255,0.05)",borderRadius:"16px",overflow:"hidden"}}>
+      {entries.map((e, i) => (
+        <div key={e.id} style={{display:"flex",alignItems:"center",gap:"16px",padding:"16px 20px",borderBottom:i<entries.length-1?"1px solid rgba(255,255,255,0.04)":"none",background:"rgba(255,255,255,0.01)"}}>
+          <div className="serif gold-text" style={{fontSize:"16px",fontStyle:"italic",minWidth:"24px"}}>{String.fromCharCode(8544 + i)}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <p style={{fontSize:"14px",color:"rgba(232,228,220,0.85)",margin:"0 0 4px",fontWeight:300,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.titre || "—"}</p>
+            <p className="mono" style={{color:"rgba(232,228,220,0.3)",margin:0,fontSize:"9px"}}>{new Date(e.date).toLocaleDateString("fr-FR",{day:"2-digit",month:"long",year:"numeric"})}</p>
+          </div>
+          <div style={{padding:"4px 10px",borderRadius:"100px",background:planColors[e.plan]+"22",border:`1px solid ${planColors[e.plan]}40`}}>
+            <span className="mono" style={{color:planColors[e.plan],fontSize:"8px"}}>{e.plan}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── App principale ───────────────────────────────────────────────────────────
 
 export default function ImmoFlowApp() {
   const [notes, setNotes]         = useState("");
@@ -809,10 +981,25 @@ export default function ImmoFlowApp() {
   const [result, setResult]       = useState<ImmoFlowResult | null>(null);
   const [error, setError]         = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("annonce");
+  const [history, setHistory]     = useState<{id: number; date: string; titre: string; plan: string}[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const userPlan = String(user?.publicMetadata?.plan ?? "solo").toLowerCase();
+  const isPrestige = userPlan === "prestige" || userPlan === "agence";
 
   useEffect(() => {
     document.querySelectorAll(".fade-up").forEach(el => el.classList.add("in"));
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== "historique" || !user?.id) return;
+    setHistoryLoading(true);
+    fetch(`/api/history?userId=${user.id}`)
+      .then(r => r.json())
+      .then(d => setHistory(d.entries ?? []))
+      .catch(() => {})
+      .finally(() => setHistoryLoading(false));
+  }, [activeTab, user?.id]);
 
   const handleGenerate = async () => {
     if (!notes.trim() || status === "loading") return;
@@ -842,6 +1029,21 @@ export default function ImmoFlowApp() {
     setError(null);
     setNotes("");
   };
+
+  const tabs: {id: TabId; label: string; icon: () => React.ReactElement}[] = [
+    {id:"annonce",    label:"Annonce",     icon: IconFileText},
+    {id:"storyboard", label:"Storyboard",  icon: IconFilm},
+    ...(isPrestige ? [
+      {id:"instagram" as TabId, label:"Instagram", icon: IconInstagram},
+      {id:"linkedin"  as TabId, label:"LinkedIn",  icon: IconLinkedin},
+      {id:"facebook"  as TabId, label:"Facebook",  icon: IconFacebook},
+      {id:"variante"  as TabId, label:"Variante B",icon: IconCopy},
+      {id:"rapport"   as TabId, label:"Rapport",   icon: IconRapport},
+    ] : [
+      {id:"reseaux"   as TabId, label:"Réseaux",   icon: IconShare},
+    ]),
+    {id:"historique" as TabId, label:"Historique", icon: IconClock},
+  ];
 
   return (
     <div style={{background:"#080808",minHeight:"100vh",fontFamily:"'Inter','Helvetica Neue',system-ui,sans-serif",color:"#e8e4dc",position:"relative",overflow:"hidden"}}>
@@ -995,9 +1197,9 @@ export default function ImmoFlowApp() {
               )}
 
               {/* Luxe Mode Toggle */}
-              <div className={`luxe-card ${luxeMode ? 'active' : ''}`} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"20px"}}>
+              <div className={`luxe-card ${luxeMode && isPrestige ? 'active' : ''}`} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"20px",opacity:isPrestige?1:0.55}}>
                 <div style={{display:"flex",alignItems:"center",gap:"16px",flex:1,minWidth:0}}>
-                  <div style={{width:"40px",height:"40px",border:"1px solid rgba(201,168,76,0.25)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:luxeMode?"rgba(201,168,76,0.08)":"transparent",transition:"all 0.6s cubic-bezier(0.16,1,0.3,1)"}}>
+                  <div style={{width:"40px",height:"40px",border:"1px solid rgba(201,168,76,0.25)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:luxeMode&&isPrestige?"rgba(201,168,76,0.08)":"transparent",transition:"all 0.6s cubic-bezier(0.16,1,0.3,1)"}}>
                     <span className="serif" style={{color:"#c9a84c",fontSize:"18px",fontStyle:"italic"}}>✦</span>
                   </div>
                   <div style={{minWidth:0}}>
@@ -1005,11 +1207,15 @@ export default function ImmoFlowApp() {
                       Analyse de Style Luxe
                     </p>
                     <p className="mono" style={{color:"rgba(232,228,220,0.4)",margin:0}}>
-                      Prompt exclusif · Plan Prestige
+                      {isPrestige ? "Prompt exclusif · Plan Prestige" : "Réservé au plan Prestige — verrouillé"}
                     </p>
                   </div>
                 </div>
-                <div onClick={() => setLuxeMode(!luxeMode)} className={`toggle-switch ${luxeMode ? 'on' : ''}`}>
+                <div
+                  onClick={() => { if (isPrestige) setLuxeMode(!luxeMode); }}
+                  className={`toggle-switch ${luxeMode && isPrestige ? 'on' : ''}`}
+                  style={{cursor: isPrestige ? "pointer" : "not-allowed"}}
+                >
                   <div className="toggle-knob" />
                 </div>
               </div>
@@ -1051,12 +1257,13 @@ export default function ImmoFlowApp() {
             <div className="fade-up d1" style={{display:"flex",flexDirection:"column",gap:"32px"}}>
 
               {/* Tabs */}
-              <div style={{display:"flex",borderBottom:"1px solid rgba(255,255,255,0.05)",background:"rgba(255,255,255,0.015)",borderRadius:"16px 16px 0 0",overflow:"hidden"}}>
-                {TABS.map(({id, label, icon: Icon}) => (
+              <div style={{display:"flex",flexWrap:"wrap",borderBottom:"1px solid rgba(255,255,255,0.05)",background:"rgba(255,255,255,0.015)",borderRadius:"16px 16px 0 0",overflow:"hidden"}}>
+                {tabs.map(({id, label, icon: Icon}) => (
                   <button
                     key={id}
                     onClick={() => setActiveTab(id)}
                     className={`tab-button ${activeTab === id ? 'active' : ''}`}
+                    style={{flex:"1 1 auto",minWidth:"80px"}}
                   >
                     <Icon />
                     <span>{label}</span>
@@ -1069,6 +1276,12 @@ export default function ImmoFlowApp() {
                 {activeTab === "annonce"    && <AnnoncePanel data={result.annonce_pro} />}
                 {activeTab === "storyboard" && <StoryboardPanel scenes={result.storyboard_video} />}
                 {activeTab === "reseaux"    && <PostPanel text={result.post_reseaux} />}
+                {activeTab === "instagram"  && <PostPlatformPanel text={result.post_instagram ?? result.post_reseaux} platform="Instagram" />}
+                {activeTab === "linkedin"   && <PostPlatformPanel text={result.post_linkedin  ?? result.post_reseaux} platform="LinkedIn" />}
+                {activeTab === "facebook"   && <PostPlatformPanel text={result.post_facebook  ?? result.post_reseaux} platform="Facebook" />}
+                {activeTab === "variante"   && result.variante_b && <VariantePanel data={result.variante_b} />}
+                {activeTab === "rapport"    && result.rapport    && <RapportPanel  data={result.rapport} />}
+                {activeTab === "historique" && <HistoriquePanel entries={history} loading={historyLoading} />}
               </div>
 
               {/* Footer actions */}
