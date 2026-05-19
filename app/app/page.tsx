@@ -63,31 +63,28 @@ function writeTextWithPageBreak(
 
 function exportPDF(result: ImmoFlowResult) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const W = 210;
-  const H = 297;
-  const margin = 22;
-  const maxW = W - margin * 2;
+  const W = 210, H = 297, M = 18, CW = W - M * 2;
 
-  // ─── Palette ──────────────────────────────────────────────────────────────
-  const BG     = [8, 8, 8] as const;          // #080808 fond profond
-  const IVORY  = [240, 236, 228] as const;    // #f0ece4 texte principal
-  const IVORY_DIM = [180, 175, 165] as const; // texte secondaire
-  const IVORY_MUTED = [120, 115, 105] as const;
-  const GOLD   = [201, 168, 76] as const;     // #c9a84c doré
-  const GOLD_LIGHT = [232, 200, 124] as const;
-  const GOLD_DIM = [140, 115, 55] as const;
-  const HAIRLINE = [40, 38, 34] as const;     // bordures fines
+  const BLACK: [number, number, number] = [8, 8, 8];
+  const TEXT: [number, number, number] = [26, 26, 26];
+  const TEXT_BODY: [number, number, number] = [51, 51, 51];
+  const GOLD: [number, number, number] = [201, 168, 76];
+  const GREY: [number, number, number] = [107, 107, 107];
+  const FOOTER_GREY: [number, number, number] = [155, 155, 155];
+  const SOFT: [number, number, number] = [249, 248, 246];
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────
+  const ptToMm = (pt: number) => pt * 0.3528;
+  const LW_HEADER_RULE = ptToMm(0.3);
+  const LW_HAIRLINE = ptToMm(0.2);
+  const W_SOCIAL_BAR = ptToMm(2);
+  const BULLET_SIZE = ptToMm(4);
 
-  // Couvre toute la page avec le fond sombre
-  const paintBackground = () => {
-    doc.setFillColor(BG[0], BG[1], BG[2]);
-    doc.rect(0, 0, W, H, "F");
-  };
+  const setFill = (c: [number, number, number]) => doc.setFillColor(c[0], c[1], c[2]);
+  const setDraw = (c: [number, number, number]) => doc.setDrawColor(c[0], c[1], c[2]);
+  const setText = (c: [number, number, number]) => doc.setTextColor(c[0], c[1], c[2]);
 
-  // Nettoie les caractères non supportés par jsPDF (emojis, glyphes spéciaux)
   const clean = (text: string): string => {
+    if (!text) return "";
     return text
       .replace(/[\u{1F000}-\u{1FFFF}]/gu, "")
       .replace(/[\u{2600}-\u{27FF}]/gu, "")
@@ -98,653 +95,205 @@ function exportPDF(result: ImmoFlowResult) {
       .replace(/[\u{1F300}-\u{1F5FF}]/gu, "")
       .replace(/[\u{1F600}-\u{1F64F}]/gu, "")
       .replace(/[\u{1F680}-\u{1F6FF}]/gu, "")
-      .replace(/[^\x00-\x7E\u00C0-\u024F\u2014\u2013\u2026\u00AB\u00BB\u201C\u201D\u2018\u2019]/g, "")
+      .replace(/[^\x00-\x7EÀ-ɏ—–…«»“”‘’]/g, "")
       .replace(/\s{2,}/g, " ")
       .trim();
   };
 
-  // Chiffres romains pour numérotation élégante
-  const roman = (n: number): string => {
-    const numerals: [number, string][] = [
-      [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"],
-    ];
-    let r = "";
-    for (const [v, s] of numerals) {
-      while (n >= v) { r += s; n -= v; }
-    }
-    return r;
+  const HEADER_BAND = 22;
+
+  const drawHeader = () => {
+    setFill(BLACK);
+    doc.rect(0, 0, W, HEADER_BAND, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    setText(GOLD);
+    doc.text("IMMOFLOW AI", W / 2, HEADER_BAND / 2 + 1.6, { align: "center", charSpace: 2 });
+    setDraw(GOLD);
+    doc.setLineWidth(LW_HEADER_RULE);
+    doc.line(0, HEADER_BAND + 0.6, W, HEADER_BAND + 0.6);
   };
 
-  // Date du jour formatée à la française
-  const dateFr = (): string => {
-    const mois = ["JANVIER","FEVRIER","MARS","AVRIL","MAI","JUIN","JUILLET","AOUT","SEPTEMBRE","OCTOBRE","NOVEMBRE","DECEMBRE"];
-    const d = new Date();
-    return `${String(d.getDate()).padStart(2,"0")} ${mois[d.getMonth()]} ${d.getFullYear()}`;
-  };
-
-  // Référence unique courte basée sur le timestamp
-  const ref = `MMXXVI . ${String(Math.floor(Date.now() / 1000) % 1000).padStart(3, "0")}`;
-
-  // Logo : cercle doré contour + lettrage
-  const drawLogo = (cx: number, cy: number, scale: number = 1) => {
-    const r = 5 * scale;
-    doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.setLineWidth(0.25 * scale);
-    doc.circle(cx, cy, r, "S");
-    // Point central doré dégradé simulé par deux cercles
-    doc.setFillColor(GOLD_LIGHT[0], GOLD_LIGHT[1], GOLD_LIGHT[2]);
-    doc.circle(cx, cy, 1.2 * scale, "F");
-  };
-
-  // Ligne dorée dégradée simulée par segments d'opacité croissante
-  const drawGoldDivider = (cy: number, width: number = 60) => {
-    const cx = W / 2;
-    const halfW = width / 2;
-    const segments = 20;
-    const segW = width / segments;
-    doc.setLineWidth(0.2);
-    for (let i = 0; i < segments; i++) {
-      // Opacité en cloche (transparent → opaque → transparent)
-      const t = i / (segments - 1);
-      const opacity = Math.sin(t * Math.PI);
-      const r = Math.round(GOLD[0] * opacity + BG[0] * (1 - opacity));
-      const g = Math.round(GOLD[1] * opacity + BG[1] * (1 - opacity));
-      const b = Math.round(GOLD[2] * opacity + BG[2] * (1 - opacity));
-      doc.setDrawColor(r, g, b);
-      const x1 = cx - halfW + i * segW;
-      const x2 = x1 + segW;
-      doc.line(x1, cy, x2, cy);
-    }
-  };
-
-  // Footer minimaliste sur chaque page
-  const drawFooter = (pageNum: number, totalPages: number) => {
-    const footerY = H - 14;
-    // Ligne fine de séparation
-    doc.setDrawColor(HAIRLINE[0], HAIRLINE[1], HAIRLINE[2]);
-    doc.setLineWidth(0.15);
-    doc.line(margin, footerY - 4, W - margin, footerY - 4);
-
-    // Mini-logo à gauche
-    drawLogo(margin + 2.5, footerY, 0.5);
-
-    // Nom à gauche
-    doc.setFont("times", "italic");
-    doc.setFontSize(8);
-    doc.setTextColor(IVORY_MUTED[0], IVORY_MUTED[1], IVORY_MUTED[2]);
-    doc.text("ImmoFlow AI", margin + 8, footerY + 1);
-
-    // Référence au centre
+  const drawFooter = (page: number, total: number) => {
+    const fy = H - 10;
+    setDraw(GOLD);
+    doc.setLineWidth(LW_HAIRLINE);
+    doc.line(M, H - 14, W - M, H - 14);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.5);
-    doc.setTextColor(IVORY_MUTED[0], IVORY_MUTED[1], IVORY_MUTED[2]);
-    doc.text(ref, W / 2, footerY + 1, { align: "center", charSpace: 1.5 });
+    doc.setFontSize(7);
+    setText(FOOTER_GREY);
+    doc.text("Genere par ImmoFlow AI", M, fy);
+    doc.text(`Page ${page} / ${total}`, W - M, fy, { align: "right" });
+  };
 
-    // Numéro de page en chiffres romains à droite
-    doc.setFont("times", "italic");
+  const TOP_Y = 28, BOTTOM_Y = H - 18;
+  let y = TOP_Y;
+
+  const newPage = () => { doc.addPage(); drawHeader(); y = TOP_Y; };
+  const ensure = (needed: number) => { if (y + needed > BOTTOM_Y) newPage(); };
+
+  const drawJustifiedLine = (line: string, x: number, ly: number, width: number) => {
+    const words = line.split(" ").filter(w => w.length > 0);
+    if (words.length <= 1) { doc.text(line, x, ly); return; }
+    const wordsW = words.reduce((s, w) => s + doc.getTextWidth(w), 0);
+    const gap = (width - wordsW) / (words.length - 1);
+    if (gap < 0 || gap > 6) { doc.text(line, x, ly); return; }
+    let cx = x;
+    for (let i = 0; i < words.length; i++) {
+      doc.text(words[i], cx, ly);
+      cx += doc.getTextWidth(words[i]) + gap;
+    }
+  };
+
+  const startSection = (label: string, isFirst = false) => {
+    if (!isFirst) {
+      y += 8;
+      if (y + 16 > BOTTOM_Y) newPage();
+      setDraw(GOLD);
+      doc.setLineWidth(LW_HAIRLINE);
+      doc.line(0, y, W, y);
+    }
+    y += 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    setText(GOLD);
+    doc.text(label.toUpperCase(), M, y, { charSpace: 1.4 });
+    y += 4;
+  };
+
+  drawHeader();
+  y = TOP_Y;
+
+  // ── ANNONCE ──
+  startSection("Annonce professionnelle", true);
+  y += 3;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(17);
+  setText(TEXT);
+  const titreLines = doc.splitTextToSize(clean(result.annonce_pro.titre), CW);
+  const titreLH = 7.5;
+  for (const line of titreLines) { ensure(titreLH); doc.text(line, M, y); y += titreLH; }
+  y += 5;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  setText(TEXT_BODY);
+  const descParas = clean(result.annonce_pro.description).split(/\n\s*\n/);
+  const bodyLH = 5.5;
+  for (let p = 0; p < descParas.length; p++) {
+    const lines = doc.splitTextToSize(descParas[p], CW);
+    for (let i = 0; i < lines.length; i++) {
+      ensure(bodyLH);
+      const isLast = i === lines.length - 1;
+      if (isLast) doc.text(lines[i], M, y);
+      else drawJustifiedLine(lines[i], M, y, CW);
+      y += bodyLH;
+    }
+    if (p < descParas.length - 1) y += 2.5;
+  }
+
+  // ── POINTS FORTS ──
+  startSection("Points forts");
+  y += 2;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  setText(TEXT);
+  const bulletLH = 5.8, bulletIndent = 5;
+  for (const pf of (result.annonce_pro.points_forts || [])) {
+    const pfText = clean(pf);
+    if (!pfText) continue;
+    const pfLines = doc.splitTextToSize(pfText, CW - bulletIndent);
+    ensure(pfLines.length * bulletLH);
+    setFill(GOLD);
+    doc.rect(M, y - 2.6, BULLET_SIZE, BULLET_SIZE, "F");
+    setText(TEXT);
+    for (let i = 0; i < pfLines.length; i++) {
+      if (i > 0) ensure(bulletLH);
+      doc.text(pfLines[i], M + bulletIndent, y);
+      y += bulletLH;
+    }
+    y += 1;
+  }
+
+  // ── STORYBOARD ──
+  startSection("Storyboard video");
+  y += 3;
+  const colW = CW / 2, dividerX = M + colW;
+  const cellPadX = 4, cellPadY = 4, cellLH = 4.8;
+  for (let s = 0; s < (result.storyboard_video || []).length; s++) {
+    const scene = result.storyboard_video[s];
+    const planTxt = clean(scene.plan);
+    const voixTxt = clean(scene.voix_off);
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.text(roman(pageNum), W - margin, footerY + 1, { align: "right" });
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.5);
-    doc.setTextColor(IVORY_MUTED[0], IVORY_MUTED[1], IVORY_MUTED[2]);
-    doc.text(`Page ${pageNum} de ${totalPages}`, W - margin, footerY + 4.5, { align: "right" });
-  };
-
-  // Ouvre une nouvelle page avec le fond noir prêt
-  const newPage = () => {
-    doc.addPage();
-    paintBackground();
-  };
-
-  // Écrit du texte avec saut de page automatique
-  const writeWithBreak = (
-    lines: string[],
-    x: number,
-    y: number,
-    lineHeight: number,
-    headerCallback?: () => number
-  ): number => {
-    for (const line of lines) {
-      if (y + lineHeight > H - 26) {
-        newPage();
-        y = headerCallback ? headerCallback() : margin + 10;
-      }
-      doc.text(line, x, y);
-      y += lineHeight;
-    }
-    return y;
-  };
-
-  // En-tête de section : label mono uppercase doré
-  const drawSectionLabel = (label: string, y: number): number => {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.text(label.toUpperCase(), margin, y, { charSpace: 2.5 });
-
-    // Ligne fine sous le label
-    doc.setDrawColor(GOLD_DIM[0], GOLD_DIM[1], GOLD_DIM[2]);
-    doc.setLineWidth(0.1);
-    doc.line(margin, y + 3, margin + 30, y + 3);
-
-    return y + 12;
-  };
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // PAGE 1 — COUVERTURE
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  paintBackground();
-
-  // Cadre fin doré à 8mm du bord (touche éditoriale luxe)
-  doc.setDrawColor(GOLD_DIM[0], GOLD_DIM[1], GOLD_DIM[2]);
-  doc.setLineWidth(0.15);
-  doc.rect(8, 8, W - 16, H - 16, "S");
-
-  // — Top : logo + lettrage
-  const topY = 32;
-  drawLogo(W / 2, topY, 1.4);
-
-  doc.setFont("times", "normal");
-  doc.setFontSize(15);
-  doc.setTextColor(IVORY[0], IVORY[1], IVORY[2]);
-  doc.text("IMMOFLOW", W / 2, topY + 14, { align: "center", charSpace: 4 });
-
-  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.text("AI", W / 2 + 28, topY + 14, { align: "left", charSpace: 4 });
-
-  // Mini-tagline sous le logo
-  doc.setFont("times", "italic");
-  doc.setFontSize(8);
-  doc.setTextColor(IVORY_MUTED[0], IVORY_MUTED[1], IVORY_MUTED[2]);
-  doc.text("Marketing immobilier de prestige", W / 2, topY + 21, { align: "center", charSpace: 1 });
-
-  // — Label "Annonce" en haut central
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.text("—  L ' A N N O N C E  —", W / 2, 95, { align: "center", charSpace: 3 });
-
-  // — Titre principal de l'annonce, très grand, italique
-  const titreClean = clean(result.annonce_pro.titre);
-  doc.setFont("times", "italic");
-  doc.setFontSize(32);
-  doc.setTextColor(IVORY[0], IVORY[1], IVORY[2]);
-
-  const titreLines = doc.splitTextToSize(titreClean, maxW - 10);
-  // Limiter à 4 lignes max sur la couverture, le reste sera repris page 2
-  const titreCover = titreLines.slice(0, 4);
-  const titreLineH = 13;
-  const titreBlockH = titreCover.length * titreLineH;
-  const titreStartY = (H / 2) - (titreBlockH / 2) + 4;
-
-  titreCover.forEach((line: string, i: number) => {
-    doc.text(line, W / 2, titreStartY + i * titreLineH, { align: "center" });
-  });
-
-  // — Divider doré sous le titre
-  drawGoldDivider(titreStartY + titreBlockH + 8, 50);
-
-  // — Sous-titre : extrait de la description (1 ou 2 lignes)
-  const descClean = clean(result.annonce_pro.description);
-  const firstSentence = descClean.split(/[.!?](\s|$)/)[0] + ".";
-  const extrait = firstSentence.length > 180
-    ? firstSentence.substring(0, 177) + "..."
-    : firstSentence;
-
-  doc.setFont("times", "italic");
-  doc.setFontSize(11);
-  doc.setTextColor(IVORY_DIM[0], IVORY_DIM[1], IVORY_DIM[2]);
-  const extraitLines = doc.splitTextToSize(extrait, maxW - 30);
-  let extraitY = titreStartY + titreBlockH + 18;
-  extraitLines.slice(0, 3).forEach((line: string) => {
-    doc.text(line, W / 2, extraitY, { align: "center" });
-    extraitY += 6;
-  });
-
-  // — Bloc bas : référence + date
-  const bottomY = H - 36;
-
-  doc.setDrawColor(GOLD_DIM[0], GOLD_DIM[1], GOLD_DIM[2]);
-  doc.setLineWidth(0.15);
-  doc.line(W / 2 - 25, bottomY - 8, W / 2 + 25, bottomY - 8);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(IVORY_MUTED[0], IVORY_MUTED[1], IVORY_MUTED[2]);
-  doc.text("REFERENCE", W / 2 - 30, bottomY - 2, { align: "center", charSpace: 2 });
-  doc.text("EDITION", W / 2 + 30, bottomY - 2, { align: "center", charSpace: 2 });
-
-  doc.setFont("times", "italic");
-  doc.setFontSize(11);
-  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.text(ref, W / 2 - 30, bottomY + 4, { align: "center" });
-
-  doc.setTextColor(IVORY[0], IVORY[1], IVORY[2]);
-  doc.text(dateFr(), W / 2 + 30, bottomY + 4, { align: "center" });
-
-  // Petit ornement central entre les deux blocs
-  doc.setFont("times", "italic");
-  doc.setFontSize(14);
-  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.text(".", W / 2, bottomY + 3, { align: "center" });
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // PAGE 2 — L'ANNONCE
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  newPage();
-  let y = 32;
-
-  // Header de page : label de section
-  y = drawSectionLabel("I  .  L'Annonce", y);
-
-  // Titre de l'annonce (réaffiché sur la page 2 pour ancrer le contexte)
-  doc.setFont("times", "italic");
-  doc.setFontSize(20);
-  doc.setTextColor(IVORY[0], IVORY[1], IVORY[2]);
-  const titreP2Lines = doc.splitTextToSize(titreClean, maxW);
-  titreP2Lines.forEach((line: string) => {
-    if (y + 9 > H - 26) { newPage(); y = margin + 10; }
-    doc.text(line, margin, y);
-    y += 9;
-  });
-
-  y += 4;
-
-  // Petit divider sous le titre
-  doc.setDrawColor(GOLD_DIM[0], GOLD_DIM[1], GOLD_DIM[2]);
-  doc.setLineWidth(0.2);
-  doc.line(margin, y, margin + 30, y);
-  y += 10;
-
-  // — Description avec lettrine
-  // La première lettre de la description en très grande capitale dorée
-  const firstChar = descClean.charAt(0);
-  const restOfDesc = descClean.substring(1);
-
-  // Dessin de la lettrine
-  doc.setFont("times", "italic");
-  doc.setFontSize(48);
-  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.text(firstChar, margin, y + 14);
-
-  // Texte qui s'enroule autour de la lettrine (les 4 premières lignes décalées)
-  const lettrineW = 18; // largeur visuelle de la lettrine
-  const descWrapMaxW = maxW - lettrineW;
-
-  doc.setFont("times", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(IVORY[0], IVORY[1], IVORY[2]);
-
-  const descLinesWrap = doc.splitTextToSize(restOfDesc, descWrapMaxW);
-  const lineH = 6;
-  const linesAroundLettrine = Math.min(4, descLinesWrap.length);
-
-  // Lignes décalées (autour de la lettrine)
-  let yDesc = y + 6;
-  for (let i = 0; i < linesAroundLettrine; i++) {
-    doc.text(descLinesWrap[i], margin + lettrineW, yDesc);
-    yDesc += lineH;
-  }
-
-  // Lignes restantes pleine largeur, en repartant à la marge
-  if (descLinesWrap.length > linesAroundLettrine) {
-    const remaining = doc.splitTextToSize(
-      descLinesWrap.slice(linesAroundLettrine).join(" "),
-      maxW
-    );
-    yDesc += 1;
-    yDesc = writeWithBreak(remaining, margin, yDesc, lineH, () => {
-      let yh = 32;
-      yh = drawSectionLabel("I  .  L'Annonce (suite)", yh);
-      doc.setFont("times", "normal");
-      doc.setFontSize(11);
-      doc.setTextColor(IVORY[0], IVORY[1], IVORY[2]);
-      return yh;
-    });
-  }
-
-  y = yDesc + 12;
-
-  // — Points forts
-  if (y > H - 80) {
-    newPage();
-    y = 32;
-    y = drawSectionLabel("I  .  L'Annonce (suite)", y);
-  }
-
-  // Section label
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.text("POINTS FORTS", margin, y, { charSpace: 2.5 });
-
-  doc.setDrawColor(GOLD_DIM[0], GOLD_DIM[1], GOLD_DIM[2]);
-  doc.setLineWidth(0.15);
-  doc.line(margin + 30, y - 1, W - margin, y - 1);
-
-  y += 10;
-
-  // Liste des points forts numérotés en romain doré
-  result.annonce_pro.points_forts.forEach((pt, i) => {
-    const ptClean = clean(pt);
-    const ptLines = doc.splitTextToSize(ptClean, maxW - 14);
-    const blockH = ptLines.length * lineH + 8;
-
-    if (y + blockH > H - 26) {
+    const leftLines = doc.splitTextToSize(planTxt, colW - cellPadX * 2);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    const rightLines = doc.splitTextToSize(voixTxt, colW - cellPadX * 2);
+    const rowLines = Math.max(leftLines.length, rightLines.length);
+    const rowH = rowLines * cellLH + cellPadY * 2;
+    if (y + rowH > BOTTOM_Y && rowH < BOTTOM_Y - TOP_Y) {
       newPage();
-      y = 32;
-      y = drawSectionLabel("I  .  L'Annonce (suite)", y);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.5);
-      doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-      doc.text("POINTS FORTS (SUITE)", margin, y, { charSpace: 2.5 });
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      setText(GOLD);
+      doc.text("STORYBOARD VIDEO (suite)", M, y + 4, { charSpace: 1.4 });
       y += 10;
     }
-
-    // Numéro romain doré italique
-    doc.setFont("times", "italic");
-    doc.setFontSize(12);
-    doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.text(roman(i + 1), margin, y);
-
-    // Texte du point fort
-    doc.setFont("times", "normal");
-    doc.setFontSize(10.5);
-    doc.setTextColor(IVORY_DIM[0], IVORY_DIM[1], IVORY_DIM[2]);
-    ptLines.forEach((line: string, li: number) => {
-      doc.text(line, margin + 12, y + li * lineH);
-    });
-
-    y += ptLines.length * lineH + 5;
-
-    // Séparateur fin entre points forts (sauf après le dernier)
-    if (i < result.annonce_pro.points_forts.length - 1) {
-      doc.setDrawColor(HAIRLINE[0], HAIRLINE[1], HAIRLINE[2]);
-      doc.setLineWidth(0.1);
-      doc.line(margin + 12, y - 1, W - margin - 30, y - 1);
-      y += 3;
+    if (s % 2 === 0) { setFill(SOFT); doc.rect(M, y, CW, rowH, "F"); }
+    setDraw(GOLD);
+    doc.setLineWidth(LW_HAIRLINE);
+    doc.line(dividerX, y, dividerX, y + rowH);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    setText(GOLD);
+    for (let i = 0; i < leftLines.length; i++) {
+      doc.text(leftLines[i], M + cellPadX, y + cellPadY + 3 + i * cellLH);
     }
-  });
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    setText(GREY);
+    for (let i = 0; i < rightLines.length; i++) {
+      doc.text(rightLines[i], dividerX + cellPadX, y + cellPadY + 3 + i * cellLH);
+    }
+    y += rowH;
+  }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // PAGE 3 — STORYBOARD VIDÉO
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  newPage();
-  y = 32;
-  y = drawSectionLabel("II  .  Storyboard Video", y);
-
-  // Sous-titre éditorial
-  doc.setFont("times", "italic");
-  doc.setFontSize(18);
-  doc.setTextColor(IVORY[0], IVORY[1], IVORY[2]);
-  doc.text("Six tableaux", margin, y);
-  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.text("pour votre videaste", margin + 32, y);
-
-  y += 10;
-
-  doc.setFont("times", "italic");
-  doc.setFontSize(10);
-  doc.setTextColor(IVORY_MUTED[0], IVORY_MUTED[1], IVORY_MUTED[2]);
-  doc.text("Chaque plan est composé pour s'enchainer naturellement. La voix off accompagne l'image.", margin, y, { maxWidth: maxW });
-
-  y += 14;
-
-  // En-têtes du tableau
-  const col1X = margin + 14;     // colonne "Plan camera"
-  const col1W = (maxW - 14) * 0.42;
-  const col2X = col1X + col1W + 6;
-  const col2W = maxW - 14 - col1W - 6;
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.text("N", margin, y, { charSpace: 2.5 });
-  doc.text("PLAN CAMERA", col1X, y, { charSpace: 2.5 });
-  doc.text("VOIX OFF", col2X, y, { charSpace: 2.5 });
-
+  // ── POST RÉSEAUX ──
+  startSection("Post reseaux sociaux");
   y += 3;
-  doc.setDrawColor(GOLD_DIM[0], GOLD_DIM[1], GOLD_DIM[2]);
-  doc.setLineWidth(0.2);
-  doc.line(margin, y, W - margin, y);
-  y += 7;
-
-  // Lignes du storyboard
-  result.storyboard_video.forEach((scene, i) => {
-    const planLines = doc.splitTextToSize(clean(scene.plan), col1W - 2);
-    const voixLines = doc.splitTextToSize(clean(scene.voix_off), col2W - 2);
-    const rowLineH = 5;
-    const rowH = Math.max(planLines.length, voixLines.length) * rowLineH + 8;
-
-    if (y + rowH > H - 26) {
-      newPage();
-      y = 32;
-      y = drawSectionLabel("II  .  Storyboard (suite)", y);
-
-      // Réafficher les en-têtes
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-      doc.text("N", margin, y, { charSpace: 2.5 });
-      doc.text("PLAN CAMERA", col1X, y, { charSpace: 2.5 });
-      doc.text("VOIX OFF", col2X, y, { charSpace: 2.5 });
-      y += 3;
-      doc.setDrawColor(GOLD_DIM[0], GOLD_DIM[1], GOLD_DIM[2]);
-      doc.setLineWidth(0.2);
-      doc.line(margin, y, W - margin, y);
-      y += 7;
-    }
-
-    // Numéro romain en grand italique doré
-    doc.setFont("times", "italic");
-    doc.setFontSize(14);
-    doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.text(roman(i + 1), margin, y + 2);
-
-    // Plan caméra (texte clair)
+  const socialPadX = 8, socialPadY = 8, socialLH = 5.5;
+  const socialInnerX = M + socialPadX;
+  const socialInnerW = CW - socialPadX * 2 - W_SOCIAL_BAR;
+  const socialLines = doc.splitTextToSize(clean(result.post_reseaux || ""), socialInnerW);
+  let remaining = [...socialLines];
+  while (remaining.length > 0) {
+    const avail = BOTTOM_Y - y;
+    const linesFit = Math.max(1, Math.floor((avail - socialPadY * 2) / socialLH));
+    if (avail < socialPadY * 2 + socialLH) { newPage(); continue; }
+    const chunk = remaining.slice(0, linesFit);
+    remaining = remaining.slice(linesFit);
+    const blockH = chunk.length * socialLH + socialPadY * 2;
+    setFill(SOFT); doc.rect(M, y, CW, blockH, "F");
+    setFill(GOLD); doc.rect(M, y, W_SOCIAL_BAR, blockH, "F");
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9.5);
-    doc.setTextColor(IVORY[0], IVORY[1], IVORY[2]);
-    planLines.forEach((line: string, li: number) => {
-      doc.text(line, col1X, y + li * rowLineH);
-    });
-
-    // Voix off (italique ivoire foncé)
-    doc.setFont("times", "italic");
     doc.setFontSize(10);
-    doc.setTextColor(IVORY_DIM[0], IVORY_DIM[1], IVORY_DIM[2]);
-    voixLines.forEach((line: string, li: number) => {
-      doc.text(line, col2X, y + li * rowLineH);
-    });
-
-    y += Math.max(planLines.length, voixLines.length) * rowLineH + 4;
-
-    // Séparateur fin entre scènes
-    if (i < result.storyboard_video.length - 1) {
-      doc.setDrawColor(HAIRLINE[0], HAIRLINE[1], HAIRLINE[2]);
-      doc.setLineWidth(0.1);
-      doc.line(margin + 14, y, W - margin, y);
-      y += 5;
+    setText(TEXT);
+    for (let i = 0; i < chunk.length; i++) {
+      doc.text(chunk[i], socialInnerX, y + socialPadY + 3.5 + i * socialLH);
     }
-  });
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // PAGE 4 — POST RÉSEAUX & CONTACT
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  newPage();
-  y = 32;
-  y = drawSectionLabel("III  .  Reseaux Sociaux", y);
-
-  doc.setFont("times", "italic");
-  doc.setFontSize(18);
-  doc.setTextColor(IVORY[0], IVORY[1], IVORY[2]);
-  doc.text("Pret a", margin, y);
-  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.text("publier", margin + 18, y);
-
-  y += 10;
-
-  doc.setFont("times", "italic");
-  doc.setFontSize(10);
-  doc.setTextColor(IVORY_MUTED[0], IVORY_MUTED[1], IVORY_MUTED[2]);
-  doc.text("Copiez-collez ce texte sur Instagram, Facebook ou LinkedIn.", margin, y);
-
-  y += 12;
-
-  // — Encadré du post
-  const postClean = clean(result.post_reseaux);
-  const postPadding = 8;
-  const postContentW = maxW - postPadding * 2;
-  const postLines = doc.splitTextToSize(postClean, postContentW);
-  const postLineH = 5.5;
-  const postBoxH = postLines.length * postLineH + postPadding * 2 + 10;
-
-  // Si pas assez de place, nouvelle page
-  if (y + postBoxH + 70 > H - 26) {
-    newPage();
-    y = 32;
-    y = drawSectionLabel("III  .  Reseaux Sociaux", y);
+    y += blockH;
+    if (remaining.length > 0) newPage();
   }
 
-  // Cadre doré fin autour du post
-  doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.setLineWidth(0.3);
-  doc.rect(margin, y, maxW, postBoxH, "S");
-
-  // Cadre intérieur très fin (touche luxe)
-  doc.setDrawColor(GOLD_DIM[0], GOLD_DIM[1], GOLD_DIM[2]);
-  doc.setLineWidth(0.1);
-  doc.rect(margin + 2, y + 2, maxW - 4, postBoxH - 4, "S");
-
-  // Ornement en haut au centre du cadre
-  doc.setFillColor(BG[0], BG[1], BG[2]);
-  doc.rect(W / 2 - 8, y - 2, 16, 4, "F");
-  doc.setFont("times", "italic");
-  doc.setFontSize(10);
-  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.text(".", W / 2, y + 1, { align: "center" });
-
-  // Texte du post
-  doc.setFont("times", "normal");
-  doc.setFontSize(10.5);
-  doc.setTextColor(IVORY[0], IVORY[1], IVORY[2]);
-
-  let postY = y + postPadding + 6;
-  postLines.forEach((line: string) => {
-    // Si une ligne sort de la box, on l'ignore (cas extrême — splitTextToSize gère normalement)
-    if (postY < y + postBoxH - postPadding) {
-      doc.text(line, margin + postPadding, postY);
-      postY += postLineH;
-    }
-  });
-
-  y += postBoxH + 18;
-
-  // ─── BLOC CONTACT DE L'AGENT ──────────────────────────────────────────────
-
-  if (y + 60 > H - 26) {
-    newPage();
-    y = 32;
-  }
-
-  // Section label
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-  doc.text("CONTACT DE L'AGENT", margin, y, { charSpace: 2.5 });
-
-  doc.setDrawColor(GOLD_DIM[0], GOLD_DIM[1], GOLD_DIM[2]);
-  doc.setLineWidth(0.15);
-  doc.line(margin + 48, y - 1, W - margin, y - 1);
-
-  y += 8;
-
-  // Sous-titre italique
-  doc.setFont("times", "italic");
-  doc.setFontSize(10);
-  doc.setTextColor(IVORY_MUTED[0], IVORY_MUTED[1], IVORY_MUTED[2]);
-  doc.text("A compléter avant transmission au client.", margin, y);
-
-  y += 12;
-
-  // Champs vides à remplir manuellement
-  const fields: [string, string][] = [
-    ["NOM DE L'AGENT", ""],
-    ["AGENCE", ""],
-    ["TELEPHONE", ""],
-    ["COURRIEL", ""],
-  ];
-
-  const fieldsPerRow = 2;
-  const fieldW = (maxW - 12) / fieldsPerRow;
-  const fieldH = 18;
-
-  fields.forEach((field, idx) => {
-    const col = idx % fieldsPerRow;
-    const row = Math.floor(idx / fieldsPerRow);
-    const fx = margin + col * (fieldW + 12);
-    const fy = y + row * (fieldH + 6);
-
-    // Label du champ
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.5);
-    doc.setTextColor(IVORY_MUTED[0], IVORY_MUTED[1], IVORY_MUTED[2]);
-    doc.text(field[0], fx, fy, { charSpace: 2 });
-
-    // Ligne de saisie dorée fine
-    doc.setDrawColor(GOLD_DIM[0], GOLD_DIM[1], GOLD_DIM[2]);
-    doc.setLineWidth(0.25);
-    doc.line(fx, fy + 8, fx + fieldW, fy + 8);
-
-    // Petit point décoratif à gauche de la ligne
-    doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-    doc.circle(fx - 1.5, fy + 8, 0.6, "F");
-  });
-
-  y += Math.ceil(fields.length / fieldsPerRow) * (fieldH + 6) + 4;
-
-  // Mention finale
-  doc.setFont("times", "italic");
-  doc.setFontSize(8);
-  doc.setTextColor(IVORY_MUTED[0], IVORY_MUTED[1], IVORY_MUTED[2]);
-  doc.text(
-    "Document genere par ImmoFlow AI . Marketing immobilier de prestige.",
-    W / 2, y + 8,
-    { align: "center" }
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // FOOTER SUR TOUTES LES PAGES (sauf la couverture qui a son propre layout)
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  const totalPages = (doc as jsPDF & { internal: { getNumberOfPages: () => number } })
-    .internal.getNumberOfPages();
-
-  for (let p = 1; p <= totalPages; p++) {
-    doc.setPage(p);
-    if (p === 1) {
-      // La couverture a déjà son bloc "Édition / Référence" — pas de footer redondant
-      continue;
-    }
-    drawFooter(p, totalPages);
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SAUVEGARDE
-  // ═══════════════════════════════════════════════════════════════════════════
+  const totalPages = (doc as jsPDF & { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) { doc.setPage(p); drawFooter(p, totalPages); }
 
   const filename = `immoflow-${clean(result.annonce_pro.titre)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .substring(0, 40)
     .replace(/^-|-$/g, "")}.pdf`;
-
   doc.save(filename || "immoflow-annonce.pdf");
 }
 
