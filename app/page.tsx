@@ -54,28 +54,28 @@ export default function LandingPage() {
       .fade-up.d4{transition-delay:0.4s}
 
       .serif{font-family:'Cormorant Garamond',Georgia,serif;font-weight:300;letter-spacing:-0.02em}
-      .mono{font-family:'Inter',sans-serif;font-weight:400;letter-spacing:0.32em;text-transform:uppercase;font-size:10px}
+      .mono{font-family:'Inter',sans-serif;font-weight:400;letter-spacing:0.36em;text-transform:uppercase;font-size:10px}
 
-      .gold-text{background:linear-gradient(135deg,#e8c87c 0%,#c9a84c 30%,#a88838 50%,#c9a84c 70%,#e8c87c 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 8s linear infinite}
+      .gold-text{background:linear-gradient(135deg,#f4d896 0%,#c9a84c 30%,#8b6914 50%,#c9a84c 70%,#f4d896 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 7s linear infinite}
 
-      .hairline{border:1px solid rgba(255,255,255,0.05)}
-      .hairline-gold{border:1px solid rgba(201,168,76,0.18)}
+      .hairline{border:1px solid rgba(201,168,76,0.10)}
+      .hairline-gold{border:1px solid rgba(201,168,76,0.22)}
 
-      .btn-primary{background:transparent;border:1px solid rgba(201,168,76,0.4);color:#e8c87c;padding:16px 32px;font-family:'Inter',sans-serif;font-size:11px;font-weight:400;letter-spacing:0.32em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:12px;position:relative;overflow:hidden;transition:all 0.6s cubic-bezier(0.16,1,0.3,1)}
-      .btn-primary::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05));opacity:0;transition:opacity 0.6s cubic-bezier(0.16,1,0.3,1)}
-      .btn-primary:hover{border-color:rgba(232,200,124,0.7);color:#f4d896;transform:translateY(-1px)}
+      .btn-primary{background:transparent;border:1px solid rgba(201,168,76,0.4);color:#e8c87c;padding:16px 32px;font-family:'Inter',sans-serif;font-size:11px;font-weight:400;letter-spacing:0.36em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:12px;position:relative;overflow:hidden;transition:all 0.6s cubic-bezier(0.16,1,0.3,1)}
+      .btn-primary::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(201,168,76,0.06));opacity:0;transition:opacity 0.6s cubic-bezier(0.16,1,0.3,1)}
+      .btn-primary:hover{border-color:rgba(232,200,124,0.7);color:#f4d896;transform:translateY(-1px);box-shadow:0 0 24px rgba(201,168,76,0.2)}
       .btn-primary:hover::before{opacity:1}
       .btn-primary > span{position:relative;z-index:1}
 
-      .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.08);color:#a8a094;padding:16px 32px;font-family:'Inter',sans-serif;font-size:11px;font-weight:400;letter-spacing:0.32em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:12px;transition:all 0.6s cubic-bezier(0.16,1,0.3,1)}
-      .btn-ghost:hover{border-color:rgba(255,255,255,0.18);color:#e8e4dc;transform:translateY(-1px)}
+      .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.08);color:#a8a094;padding:16px 32px;font-family:'Inter',sans-serif;font-size:11px;font-weight:400;letter-spacing:0.36em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:12px;transition:all 0.6s cubic-bezier(0.16,1,0.3,1)}
+      .btn-ghost:hover{border-color:rgba(201,168,76,0.22);color:#e8e4dc;transform:translateY(-1px)}
 
-      .nav-link{color:rgba(232,228,220,0.5);font-size:11px;letter-spacing:0.28em;text-transform:uppercase;text-decoration:none;font-weight:400;transition:color 0.4s cubic-bezier(0.16,1,0.3,1);position:relative}
+      .nav-link{color:rgba(232,228,220,0.5);font-size:11px;letter-spacing:0.32em;text-transform:uppercase;text-decoration:none;font-weight:400;transition:color 0.4s cubic-bezier(0.16,1,0.3,1);position:relative}
       .nav-link:hover{color:#e8c87c}
 
-      .bento{background:linear-gradient(180deg,rgba(255,255,255,0.018) 0%,rgba(255,255,255,0.005) 100%);border:1px solid rgba(255,255,255,0.05);border-radius:20px;padding:2.5rem;position:relative;overflow:hidden;transition:all 0.8s cubic-bezier(0.16,1,0.3,1)}
-      .bento::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,0.2),transparent);opacity:0;transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1)}
-      .bento:hover{border-color:rgba(201,168,76,0.15);transform:translateY(-2px);background:linear-gradient(180deg,rgba(201,168,76,0.025) 0%,rgba(255,255,255,0.005) 100%)}
+      .bento{background:linear-gradient(180deg,rgba(255,255,255,0.025) 0%,rgba(255,255,255,0.008) 100%);border:1px solid rgba(201,168,76,0.12);border-radius:20px;padding:3.5rem;position:relative;overflow:hidden;transition:all 0.8s cubic-bezier(0.16,1,0.3,1)}
+      .bento::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,200,124,0.35),transparent);opacity:0;transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1)}
+      .bento:hover{border-color:rgba(201,168,76,0.28);transform:translateY(-2px);background:linear-gradient(180deg,rgba(201,168,76,0.035) 0%,rgba(255,255,255,0.008) 100%);box-shadow:0 24px 60px -28px rgba(201,168,76,0.18)}
       .bento:hover::before{opacity:1}
 
       .price-card{background:linear-gradient(180deg,rgba(255,255,255,0.015) 0%,rgba(0,0,0,0.2) 100%);border:1px solid rgba(255,255,255,0.05);border-radius:24px;padding:3rem 2.5rem;position:relative;transition:all 0.8s cubic-bezier(0.16,1,0.3,1);backdrop-filter:blur(10px)}
@@ -89,14 +89,14 @@ export default function LandingPage() {
       input[type=email]:focus{border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.02)}
       input[type=email]::placeholder{color:rgba(232,228,220,0.25);letter-spacing:0.04em}
 
-      .submit-btn{background:linear-gradient(135deg,#e8c87c 0%,#c9a84c 50%,#a88838 100%);border:none;color:#080808;padding:18px 20px;font-family:'Inter',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.32em;text-transform:uppercase;cursor:pointer;transition:all 0.6s cubic-bezier(0.16,1,0.3,1);width:100%;position:relative;overflow:hidden}
-      .submit-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 20px 60px -20px rgba(201,168,76,0.4)}
+      .submit-btn{background:linear-gradient(135deg,#f4d896 0%,#e8c87c 30%,#c9a84c 60%,#a88838 100%);background-size:180% 180%;border:none;color:#080808;padding:18px 20px;font-family:'Inter',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.36em;text-transform:uppercase;cursor:pointer;transition:all 0.6s cubic-bezier(0.16,1,0.3,1);width:100%;position:relative;overflow:hidden;box-shadow:0 12px 36px -16px rgba(232,200,124,0.35),inset 0 1px 0 rgba(255,255,255,0.25)}
+      .submit-btn:hover:not(:disabled){transform:translateY(-1px);background-position:100% 0;box-shadow:0 24px 64px -20px rgba(232,200,124,0.55),inset 0 1px 0 rgba(255,255,255,0.35)}
       .submit-btn:disabled{cursor:not-allowed}
 
       .marquee{display:flex;gap:4rem;animation:marquee 40s linear infinite;white-space:nowrap}
       @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
-      .divider-fine{height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,0.2),transparent)}
+      .divider-fine{height:1px;background:linear-gradient(90deg,transparent,rgba(232,200,124,0.32),transparent)}
 
       .check-mark{width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:3px;color:#c9a84c}
 
@@ -133,7 +133,7 @@ export default function LandingPage() {
     <div style={{position:"relative",zIndex:2}}>
 
       {/* NAV */}
-      <nav style={{padding:"1.75rem 3rem",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,background:"rgba(8,8,8,0.72)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",zIndex:100,borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
+      <nav style={{padding:"1.25rem 3rem",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,background:"rgba(8,8,8,0.78)",backdropFilter:"blur(28px)",WebkitBackdropFilter:"blur(28px)",zIndex:100,borderBottom:"1px solid rgba(201,168,76,0.08)"}}>
         <div style={{display:"flex",alignItems:"center",gap:"14px"}}>
           <div style={{width:"28px",height:"28px",border:"1px solid rgba(201,168,76,0.4)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
             <div style={{width:"6px",height:"6px",borderRadius:"50%",background:"linear-gradient(135deg,#e8c87c,#a88838)"}} />
@@ -154,14 +154,14 @@ export default function LandingPage() {
       </nav>
 
       {/* HERO */}
-      <section style={{maxWidth:"1280px",margin:"0 auto",padding:"9rem 3rem 7rem",textAlign:"center",position:"relative"}}>
+      <section style={{maxWidth:"1280px",margin:"0 auto",padding:"12rem 3rem 10rem",textAlign:"center",position:"relative"}}>
 
         <div className="fade-up" style={{display:"inline-flex",alignItems:"center",gap:"10px",padding:"8px 16px",border:"1px solid rgba(201,168,76,0.2)",borderRadius:"100px",marginBottom:"3rem",background:"rgba(201,168,76,0.03)"}}>
           <div style={{width:"6px",height:"6px",borderRadius:"50%",background:"#c9a84c",boxShadow:"0 0 12px rgba(201,168,76,0.6)"}} />
           <span className="mono" style={{color:"#c9a84c",letterSpacing:"0.32em"}}>Intelligence Marketing Immobilière</span>
         </div>
 
-        <h1 className="fade-up d1 serif hero-title" style={{fontSize:"clamp(48px,8vw,104px)",lineHeight:0.95,margin:"0 0 2rem",color:"#f0ece4"}}>
+        <h1 className="fade-up d1 serif hero-title" style={{fontSize:"clamp(56px,9vw,128px)",lineHeight:0.92,margin:"0 0 2.5rem",color:"#f0ece4",letterSpacing:"-0.03em"}}>
           L'art de vendre<br />
           <span style={{fontStyle:"italic",fontWeight:300}}>les biens </span>
           <span className="gold-text" style={{fontStyle:"italic",fontWeight:300}}>d'exception</span>
@@ -217,11 +217,11 @@ export default function LandingPage() {
       </section>
 
       {/* FEATURES — BENTO GRID */}
-      <section id="fonctionnalites" style={{maxWidth:"1280px",margin:"0 auto",padding:"9rem 3rem"}}>
+      <section id="fonctionnalites" style={{maxWidth:"1280px",margin:"0 auto",padding:"12rem 3rem"}}>
 
-        <div className="fade-up" style={{textAlign:"center",marginBottom:"5rem"}}>
+        <div className="fade-up" style={{textAlign:"center",marginBottom:"6rem"}}>
           <p className="mono" style={{color:"#c9a84c",marginBottom:"1.5rem"}}>— L'atelier —</p>
-          <h2 className="serif" style={{fontSize:"clamp(36px,5vw,64px)",color:"#f0ece4",margin:0,lineHeight:1.05}}>
+          <h2 className="serif" style={{fontSize:"clamp(44px,6vw,80px)",color:"#f0ece4",margin:0,lineHeight:1.03,letterSpacing:"-0.02em"}}>
             Un pack marketing complet,<br />
             <span style={{fontStyle:"italic"}}>orchestré comme</span> <span className="gold-text" style={{fontStyle:"italic"}}>une collection</span>
           </h2>
@@ -302,10 +302,10 @@ export default function LandingPage() {
       <div className="divider-fine" style={{maxWidth:"720px",margin:"0 auto"}} />
 
       {/* COMMENT ÇA MARCHE */}
-      <section style={{maxWidth:"1080px",margin:"0 auto",padding:"9rem 3rem"}}>
-        <div className="fade-up" style={{textAlign:"center",marginBottom:"5rem"}}>
+      <section style={{maxWidth:"1080px",margin:"0 auto",padding:"12rem 3rem"}}>
+        <div className="fade-up" style={{textAlign:"center",marginBottom:"6rem"}}>
           <p className="mono" style={{color:"#c9a84c",marginBottom:"1.5rem"}}>— La méthode —</p>
-          <h2 className="serif" style={{fontSize:"clamp(36px,5vw,64px)",color:"#f0ece4",margin:0,lineHeight:1.05}}>
+          <h2 className="serif" style={{fontSize:"clamp(44px,6vw,80px)",color:"#f0ece4",margin:0,lineHeight:1.03,letterSpacing:"-0.02em"}}>
             Trois gestes,<br /><span style={{fontStyle:"italic"}} className="gold-text">dix secondes</span>
           </h2>
         </div>
@@ -328,10 +328,10 @@ export default function LandingPage() {
       <div className="divider-fine" style={{maxWidth:"720px",margin:"0 auto"}} />
 
       {/* TARIFS */}
-      <section id="tarifs" style={{maxWidth:"1200px",margin:"0 auto",padding:"9rem 3rem"}}>
-        <div className="fade-up" style={{textAlign:"center",marginBottom:"5rem"}}>
+      <section id="tarifs" style={{maxWidth:"1200px",margin:"0 auto",padding:"12rem 3rem"}}>
+        <div className="fade-up" style={{textAlign:"center",marginBottom:"6rem"}}>
           <p className="mono" style={{color:"#c9a84c",marginBottom:"1.5rem"}}>— Honoraires —</p>
-          <h2 className="serif" style={{fontSize:"clamp(36px,5vw,64px)",color:"#f0ece4",margin:0,lineHeight:1.05}}>
+          <h2 className="serif" style={{fontSize:"clamp(44px,6vw,80px)",color:"#f0ece4",margin:0,lineHeight:1.03,letterSpacing:"-0.02em"}}>
             Trois formules,<br /><span style={{fontStyle:"italic"}}>une </span><span style={{fontStyle:"italic"}} className="gold-text">même exigence</span>
           </h2>
         </div>
@@ -428,7 +428,7 @@ export default function LandingPage() {
       <div className="divider-fine" style={{maxWidth:"720px",margin:"0 auto"}} />
 
       {/* TESTIMONIAL / QUOTE */}
-      <section style={{maxWidth:"880px",margin:"0 auto",padding:"9rem 3rem",textAlign:"center"}}>
+      <section style={{maxWidth:"880px",margin:"0 auto",padding:"12rem 3rem",textAlign:"center"}}>
         <div className="fade-up">
           <div style={{fontSize:"60px",color:"rgba(201,168,76,0.3)",lineHeight:1,marginBottom:"1.5rem",fontFamily:"'Cormorant Garamond',serif"}}>"</div>
           <p className="serif" style={{fontSize:"clamp(24px,3.5vw,40px)",color:"#f0ece4",lineHeight:1.35,margin:"0 0 2.5rem",fontStyle:"italic",fontWeight:300}}>
@@ -444,7 +444,7 @@ export default function LandingPage() {
       <div className="divider-fine" style={{maxWidth:"720px",margin:"0 auto"}} />
 
       {/* WAITLIST / CONTACT */}
-      <section id="contact" style={{maxWidth:"640px",margin:"0 auto",padding:"9rem 3rem",textAlign:"center"}}>
+      <section id="contact" style={{maxWidth:"640px",margin:"0 auto",padding:"12rem 3rem",textAlign:"center"}}>
         <div className="fade-up">
           <p className="mono" style={{color:"#c9a84c",marginBottom:"1.5rem"}}>— Accès anticipé —</p>
           <h2 className="serif" style={{fontSize:"clamp(36px,5vw,56px)",color:"#f0ece4",margin:"0 0 1.5rem",lineHeight:1.05}}>
@@ -486,7 +486,8 @@ export default function LandingPage() {
       </section>
 
       {/* FOOTER */}
-      <footer style={{borderTop:"1px solid rgba(255,255,255,0.04)",padding:"4rem 3rem 3rem",background:"rgba(0,0,0,0.4)"}}>
+      <footer style={{borderTop:"1px solid rgba(201,168,76,0.18)",padding:"4rem 3rem 3rem",background:"rgba(0,0,0,0.4)",position:"relative"}}>
+        <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:"min(640px,60%)",height:"1px",background:"linear-gradient(90deg,transparent,rgba(232,200,124,0.5),transparent)"}} />
         <div style={{maxWidth:"1280px",margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",gap:"2rem"}}>
           <div style={{display:"flex",alignItems:"center",gap:"14px"}}>
             <div style={{width:"32px",height:"32px",border:"1px solid rgba(201,168,76,0.4)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -506,7 +507,7 @@ export default function LandingPage() {
 
           <div className="divider-fine" style={{width:"120px"}} />
 
-          <p className="serif" style={{fontSize:"15px",color:"rgba(232,228,220,0.4)",margin:0,fontStyle:"italic",textAlign:"center",fontWeight:300}}>
+          <p className="serif" style={{fontSize:"17px",color:"rgba(232,228,220,0.5)",margin:0,fontStyle:"italic",textAlign:"center",fontWeight:300,letterSpacing:"0.01em"}}>
             Le marketing immobilier de prestige, à l'ère de l'intelligence.
           </p>
           <p className="mono" style={{color:"rgba(232,228,220,0.25)",margin:0}}>© MMXXVI · ImmoFlow AI · Paris</p>

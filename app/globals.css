@@ -3,6 +3,28 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* ─── Brand tokens — ImmoFlow AI · Chic · Luxe · Prestige ────────── */
+  --bg-deep:        #080808;
+  --bg-card:        rgba(255, 255, 255, 0.025);
+  --bg-card-hover:  rgba(201, 168, 76, 0.035);
+
+  --hairline:       rgba(255, 255, 255, 0.04);
+  --hairline-soft:  rgba(255, 255, 255, 0.05);
+  --hairline-gold:  rgba(201, 168, 76, 0.12);
+  --hairline-gold-strong: rgba(201, 168, 76, 0.25);
+
+  --gold:           #c9a84c;
+  --gold-light:     #e8c87c;
+  --gold-bright:    #f4d896;
+  --gold-dark:      #a88838;
+  --gold-deep:      #8b6914;
+
+  --ivory:          #f0ece4;
+  --ivory-text:     #e8e4dc;
+  --ivory-dim:      rgba(232, 228, 220, 0.55);
+  --ivory-mute:     rgba(232, 228, 220, 0.35);
+  --ivory-faint:    rgba(232, 228, 220, 0.25);
 }
 
 @theme inline {
@@ -20,7 +42,10 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-deep);
+  color: var(--ivory-text);
+  font-family: "Inter", "Helvetica Neue", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }

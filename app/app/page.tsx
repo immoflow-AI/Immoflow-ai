@@ -965,29 +965,32 @@ export default function ImmoFlowApp() {
         .fade-up.d3{transition-delay:0.3s}
 
         .serif{font-family:'Cormorant Garamond',Georgia,serif;font-weight:300;letter-spacing:-0.01em}
-        .mono{font-family:'Inter',sans-serif;font-weight:400;letter-spacing:0.32em;text-transform:uppercase;font-size:10px}
+        .mono{font-family:'Inter',sans-serif;font-weight:400;letter-spacing:0.36em;text-transform:uppercase;font-size:10px}
 
-        .gold-text{background:linear-gradient(135deg,#e8c87c 0%,#c9a84c 30%,#a88838 50%,#c9a84c 70%,#e8c87c 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 8s linear infinite}
+        .gold-text{background:linear-gradient(135deg,#f4d896 0%,#c9a84c 30%,#8b6914 50%,#c9a84c 70%,#f4d896 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 7s linear infinite}
 
         .nav-link{color:rgba(232,228,220,0.5);font-size:11px;letter-spacing:0.28em;text-transform:uppercase;text-decoration:none;font-weight:400;transition:color 0.4s cubic-bezier(0.16,1,0.3,1)}
         .nav-link:hover{color:#e8c87c}
 
         .btn-primary{background:transparent;border:1px solid rgba(201,168,76,0.4);color:#e8c87c;padding:14px 28px;font-family:'Inter',sans-serif;font-size:11px;font-weight:400;letter-spacing:0.32em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:10px;position:relative;overflow:hidden;transition:all 0.6s cubic-bezier(0.16,1,0.3,1)}
         .btn-primary::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05));opacity:0;transition:opacity 0.6s cubic-bezier(0.16,1,0.3,1)}
-        .btn-primary:hover:not(:disabled){border-color:rgba(232,200,124,0.7);color:#f4d896;transform:translateY(-1px)}
+        .btn-primary:hover:not(:disabled){border-color:rgba(232,200,124,0.7);color:#f4d896;transform:translateY(-1px);box-shadow:0 0 24px rgba(201,168,76,0.2)}
         .btn-primary:hover:not(:disabled)::before{opacity:1}
         .btn-primary > *{position:relative;z-index:1}
         .btn-primary:disabled{cursor:not-allowed;opacity:0.4}
 
         .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.08);color:rgba(232,228,220,0.7);padding:12px 24px;font-family:'Inter',sans-serif;font-size:10px;font-weight:400;letter-spacing:0.32em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:10px;transition:all 0.6s cubic-bezier(0.16,1,0.3,1)}
-        .btn-ghost:hover{border-color:rgba(255,255,255,0.18);color:#e8e4dc;transform:translateY(-1px)}
+        .btn-ghost:hover{border-color:rgba(201,168,76,0.22);color:#e8e4dc;transform:translateY(-1px)}
 
-        textarea{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:16px;padding:24px;font-size:15px;color:#e8e4dc;font-family:'Inter',sans-serif;font-weight:300;outline:none;transition:all 0.6s cubic-bezier(0.16,1,0.3,1);width:100%;line-height:1.75;resize:vertical;letter-spacing:0.01em}
-        textarea:focus{border-color:rgba(201,168,76,0.25);background:rgba(201,168,76,0.015)}
+        .textarea-wrap{position:relative}
+        .textarea-wrap .floating-label{color:rgba(232,228,220,0.4);transition:color 0.5s cubic-bezier(0.16,1,0.3,1)}
+        .textarea-wrap:focus-within .floating-label{color:#c9a84c}
+        textarea{background:rgba(255,255,255,0.025);border:1px solid rgba(201,168,76,0.12);border-radius:4px;padding:24px;font-size:15px;color:#e8e4dc;font-family:'Inter',sans-serif;font-weight:300;outline:none;transition:all 0.6s cubic-bezier(0.16,1,0.3,1);width:100%;line-height:1.75;resize:vertical;letter-spacing:0.01em}
+        textarea:focus{border-color:rgba(201,168,76,0.45);background:rgba(201,168,76,0.025);box-shadow:0 0 0 4px rgba(201,168,76,0.06)}
         textarea::placeholder{color:rgba(232,228,220,0.25);font-style:italic;font-family:'Cormorant Garamond',serif;font-size:17px}
 
-        .submit-luxe{background:linear-gradient(135deg,#e8c87c 0%,#c9a84c 50%,#a88838 100%);border:none;color:#080808;padding:18px;font-family:'Inter',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.32em;text-transform:uppercase;cursor:pointer;transition:all 0.6s cubic-bezier(0.16,1,0.3,1);width:100%;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;position:relative;overflow:hidden}
-        .submit-luxe:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 20px 60px -20px rgba(201,168,76,0.4)}
+        .submit-luxe{background:linear-gradient(135deg,#f4d896 0%,#e8c87c 30%,#c9a84c 60%,#a88838 100%);background-size:180% 180%;border:none;color:#080808;padding:20px;font-family:'Inter',sans-serif;font-size:11px;font-weight:500;letter-spacing:0.36em;text-transform:uppercase;cursor:pointer;transition:all 0.6s cubic-bezier(0.16,1,0.3,1);width:100%;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:4px;position:relative;overflow:hidden;box-shadow:0 14px 40px -18px rgba(232,200,124,0.4),inset 0 1px 0 rgba(255,255,255,0.28)}
+        .submit-luxe:hover:not(:disabled){transform:translateY(-1px);background-position:100% 0;box-shadow:0 28px 72px -22px rgba(232,200,124,0.6),inset 0 1px 0 rgba(255,255,255,0.4)}
         .submit-luxe:disabled{cursor:not-allowed;background:rgba(255,255,255,0.04);color:rgba(232,228,220,0.3)}
 
         .divider-fine{height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,0.2),transparent)}
@@ -995,7 +998,7 @@ export default function ImmoFlowApp() {
         .tab-button{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;padding:18px 12px;background:transparent;border:none;color:rgba(232,228,220,0.35);font-size:10px;letter-spacing:0.32em;text-transform:uppercase;cursor:pointer;font-family:'Inter',sans-serif;font-weight:400;transition:all 0.6s cubic-bezier(0.16,1,0.3,1);position:relative}
         .tab-button:hover{color:rgba(232,228,220,0.6)}
         .tab-button.active{color:#e8c87c}
-        .tab-button.active::after{content:"";position:absolute;bottom:-1px;left:25%;right:25%;height:1px;background:linear-gradient(90deg,transparent,#c9a84c,transparent)}
+        .tab-button.active::after{content:"";position:absolute;bottom:-1px;left:18%;right:18%;height:2px;background:linear-gradient(90deg,transparent,#e8c87c,#c9a84c,#e8c87c,transparent);box-shadow:0 0 12px rgba(232,200,124,0.4)}
 
         .luxe-card{background:linear-gradient(180deg,rgba(255,255,255,0.018) 0%,rgba(255,255,255,0.005) 100%);border:1px solid rgba(255,255,255,0.05);border-radius:16px;padding:20px 24px;transition:all 0.6s cubic-bezier(0.16,1,0.3,1)}
         .luxe-card.active{background:linear-gradient(180deg,rgba(201,168,76,0.05) 0%,rgba(201,168,76,0.01) 100%);border-color:rgba(201,168,76,0.2)}
@@ -1078,9 +1081,9 @@ export default function ImmoFlowApp() {
           {status !== "success" && (
             <div className="fade-up d1" style={{display:"flex",flexDirection:"column",gap:"20px"}}>
 
-              <div style={{position:"relative"}}>
+              <div className="textarea-wrap" style={{position:"relative"}}>
                 <div style={{position:"absolute",top:"-12px",left:"24px",background:"#080808",padding:"0 12px",zIndex:2}}>
-                  <span className="mono" style={{color:"rgba(232,228,220,0.4)"}}>Notes de visite</span>
+                  <span className="mono floating-label">Notes de visite</span>
                 </div>
                 <textarea
                   value={notes}
