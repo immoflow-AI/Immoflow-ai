@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    document.querySelectorAll(".fade-up").forEach(el => el.classList.add("in"));
+  }, []);
 
  const handleSubmit = async () => {
     if (!email.trim() || !email.includes("@")) return;
@@ -119,16 +123,6 @@ export default function LandingPage() {
       <div className="mesh-3" />
     </div>
 
-    {/* IntersectionObserver script */}
-    <script dangerouslySetInnerHTML={{__html:`
-      if(typeof window!=='undefined'){
-        const obs=new IntersectionObserver((entries)=>{
-          entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target)}});
-        },{threshold:0.12,rootMargin:'0px 0px -60px 0px'});
-        const init=()=>document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
-        if(document.readyState!=='loading')init();else document.addEventListener('DOMContentLoaded',init);
-      }
-    `}} />
 
     <div style={{position:"relative",zIndex:2}}>
 
