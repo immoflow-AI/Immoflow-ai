@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
-import { useUser } from "@clerk/nextjs";
+import { useUser, useClerk } from "@clerk/nextjs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -905,6 +905,7 @@ export default function ImmoFlowApp() {
   const [notes, setNotes]         = useState("");
   const [luxeMode, setLuxeMode]   = useState(false);
   const { user } = useUser();
+  const { signOut } = useClerk();
   const [status, setStatus]       = useState<Status>("idle");
   const [result, setResult]       = useState<ImmoFlowResult | null>(null);
   const [error, setError]         = useState<string | null>(null);
@@ -1047,6 +1048,7 @@ export default function ImmoFlowApp() {
               <div style={{width:"6px",height:"6px",borderRadius:"50%",background:"#c9a84c",boxShadow:"0 0 8px rgba(201,168,76,0.6)",animation:"pulse 2s ease-in-out infinite"}} />
               <span className="mono" style={{color:"#c9a84c",fontSize:"9px"}}>L'atelier</span>
             </div>
+            <button onClick={() => signOut({ redirectUrl: "/" })} className="nav-link" style={{background:"none",border:"none",cursor:"pointer",padding:0}}>Déconnexion</button>
           </div>
         </nav>
 
