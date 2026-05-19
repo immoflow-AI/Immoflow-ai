@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import { useUser } from "@clerk/nextjs";
 
@@ -910,6 +910,17 @@ export default function ImmoFlowApp() {
   const [error, setError]         = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("annonce");
 
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add("in"); obs.unobserve(e.target); }
+      }),
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+    );
+    document.querySelectorAll(".fade-up:not(.in)").forEach(el => obs.observe(el));
+    return () => obs.disconnect();
+  }, [status]);
+
   const handleGenerate = async () => {
     if (!notes.trim() || status === "loading") return;
     setStatus("loading");
@@ -1023,18 +1034,8 @@ export default function ImmoFlowApp() {
         <div className="mesh-2" />
       </div>
 
-      {/* IntersectionObserver */}
-      <script dangerouslySetInnerHTML={{__html:`
-        if(typeof window!=='undefined'){
-          const obs=new IntersectionObserver((entries)=>{
-            entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target)}});
-          },{threshold:0.12,rootMargin:'0px 0px -40px 0px'});
-          const init=()=>document.querySelectorAll('.fade-up:not(.in)').forEach(el=>obs.observe(el));
-          if(document.readyState!=='loading')init();else document.addEventListener('DOMContentLoaded',init);
-        }
-      `}} />
 
-      <div style={{position:"relative",zIndex:2}}>
+<div style={{position:"relative",zIndex:2}}>
 
         {/* NAV */}
         <nav style={{padding:"1.75rem 3rem",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,background:"rgba(8,8,8,0.72)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",zIndex:100,borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
