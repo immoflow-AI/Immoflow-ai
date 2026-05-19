@@ -297,6 +297,356 @@ function exportPDF(result: ImmoFlowResult) {
   doc.save(filename || "immoflow-annonce.pdf");
 }
 
+// ─── Export PDF Prestige & Agence ────────────────────────────────────────────
+
+function generatePDF(
+  result: ImmoFlowResult,
+  plan: "prestige" | "agence",
+  agencyName?: string,
+  agencyLogoBase64?: string
+) {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const W = 210, H = 297, M = 20, CW = W - M * 2;
+
+  const BG_PAGE:   [number,number,number] = [253, 252, 250];
+  const BG_HEADER: [number,number,number] = [8, 8, 8];
+  const GOLD:      [number,number,number] = [201, 168, 76];
+  const TEXT:      [number,number,number] = [28, 28, 28];
+  const TEXT_DIM:  [number,number,number] = [90, 90, 90];
+  const SUBTLE:    [number,number,number] = [136, 136, 136];
+  const SOFT:      [number,number,number] = [245, 242, 237];
+  const SOCIAL_FG: [number,number,number] = [232, 228, 220];
+
+  const ptToMm = (pt: number) => pt * 0.3528;
+  const LW_GOLD_BAND = ptToMm(0.5);
+  const LW_HAIR      = ptToMm(0.15);
+  const LW_RULE_03   = ptToMm(0.3);
+  const LW_RULE_01   = ptToMm(0.1);
+  const W_BORDER_3PT = ptToMm(3);
+  const DBL_RULE_GAP = 0.6;
+
+  const setFill = (c: [number,number,number]) => doc.setFillColor(c[0], c[1], c[2]);
+  const setDraw = (c: [number,number,number]) => doc.setDrawColor(c[0], c[1], c[2]);
+  const setText = (c: [number,number,number]) => doc.setTextColor(c[0], c[1], c[2]);
+
+  const clean = (text: string): string => {
+    if (!text) return "";
+    return text
+      .replace(/[\u{1F000}-\u{1FFFF}]/gu, "")
+      .replace(/[\u{2600}-\u{27FF}]/gu, "")
+      .replace(/[\u{FE00}-\u{FEFF}]/gu, "")
+      .replace(/[\u{1F900}-\u{1F9FF}]/gu, "")
+      .replace(/[\u{2190}-\u{21FF}]/gu, "")
+      .replace(/[\u{2700}-\u{27BF}]/gu, "")
+      .replace(/[\u{1F300}-\u{1F5FF}]/gu, "")
+      .replace(/[\u{1F600}-\u{1F64F}]/gu, "")
+      .replace(/[\u{1F680}-\u{1F6FF}]/gu, "")
+      .replace(/[^\x00-\x7EÀ-ɏ—–…«»“”‘’]/g, "")
+      .replace(/[ \t]{2,}/g, " ")
+      .trim();
+  };
+  const cleanMulti = (text: string): string => {
+    if (!text) return "";
+    return text
+      .replace(/[\u{1F000}-\u{1FFFF}]/gu, "")
+      .replace(/[\u{2600}-\u{27FF}]/gu, "")
+      .replace(/[\u{FE00}-\u{FEFF}]/gu, "")
+      .replace(/[\u{1F900}-\u{1F9FF}]/gu, "")
+      .replace(/[\u{1F300}-\u{1F5FF}]/gu, "")
+      .replace(/[\u{1F600}-\u{1F64F}]/gu, "")
+      .replace(/[\u{1F680}-\u{1F6FF}]/gu, "")
+      .replace(/[^\n\x00-\x7EÀ-ɏ—–…«»“”‘’]/g, "")
+      .replace(/[ \t]{2,}/g, " ")
+      .trim();
+  };
+
+  const paintPage = () => { setFill(BG_PAGE); doc.rect(0, 0, W, H, "F"); };
+
+  const HEADER_BAND = 30;
+  const TOP_Y = HEADER_BAND + 6;
+
+  const drawHeader = () => {
+    setFill(BG_HEADER); doc.rect(0, 0, W, HEADER_BAND, "F");
+    setDraw(GOLD); doc.setLineWidth(LW_GOLD_BAND);
+    doc.line(0, 0.4, W, 0.4);
+    doc.line(0, HEADER_BAND - 0.4, W, HEADER_BAND - 0.4);
+
+    doc.setFont("helvetica", "bold"); doc.setFontSize(15); setText(GOLD);
+    doc.text("IMMOFLOW AI", M, 12, { charSpace: 2.4 });
+
+    doc.setFont("helvetica", "normal"); doc.setFontSize(6); setText(SUBTLE);
+    doc.text("MARKETING DE PRESTIGE  ·  DOCUMENT CONFIDENTIEL", M, 19, { charSpace: 1.4 });
+
+    if (plan === "agence") {
+      const lw = 40, lh = 16;
+      const lx = W - M - lw;
+      const ly = (HEADER_BAND - lh) / 2;
+      setDraw(GOLD); doc.setLineWidth(0.1);
+      doc.rect(lx, ly, lw, lh, "S");
+      let rendered = false;
+      if (agencyLogoBase64) {
+        try {
+          const fmt = agencyLogoBase64.startsWith("data:image/jpeg") ? "JPEG" : "PNG";
+          doc.addImage(agencyLogoBase64, fmt, lx + 1, ly + 1, lw - 2, lh - 2, undefined, "FAST");
+          rendered = true;
+        } catch { rendered = false; }
+      }
+      if (!rendered) {
+        doc.setFont("helvetica", "italic"); doc.setFontSize(8); setText(SUBTLE);
+        doc.text("VOTRE AGENCE", lx + lw / 2, ly + lh / 2 + 1, { align: "center" });
+      }
+    }
+  };
+
+  const drawDoubleRule = (cy: number) => {
+    setDraw(GOLD); doc.setLineWidth(LW_HAIR);
+    doc.line(M, cy, W - M, cy);
+    doc.line(M, cy + DBL_RULE_GAP, W - M, cy + DBL_RULE_GAP);
+  };
+
+  const drawFooter = (page: number, total: number) => {
+    const ruleY = H - 14;
+    const fy = H - 9;
+    setDraw(GOLD); doc.setLineWidth(LW_HAIR);
+    doc.line(M, ruleY, W - M, ruleY);
+    doc.line(M, ruleY + DBL_RULE_GAP, W - M, ruleY + DBL_RULE_GAP);
+
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7); setText(SUBTLE);
+    doc.text("Genere par ImmoFlow AI  ·  Marketing de Prestige", M, fy);
+
+    setFill(GOLD); doc.circle(W / 2, fy - 1.2, 1.2, "F");
+
+    if (plan === "agence" && agencyName) {
+      doc.setFont("helvetica", "italic"); doc.setFontSize(7); setText(SUBTLE);
+      doc.text(agencyName, W / 2 + 5, fy);
+    }
+
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7); setText(SUBTLE);
+    doc.text(`Page ${page} / ${total}`, W - M, fy, { align: "right" });
+  };
+
+  const BOTTOM_Y = H - 20;
+  let y = TOP_Y;
+
+  const newPage = () => { doc.addPage(); paintPage(); drawHeader(); y = TOP_Y; };
+  const ensure = (n: number) => { if (y + n > BOTTOM_Y) newPage(); };
+
+  const drawJustifiedLine = (line: string, x: number, ly: number, width: number) => {
+    const words = line.split(" ").filter(w => w.length > 0);
+    if (words.length <= 1) { doc.text(line, x, ly); return; }
+    const wordsW = words.reduce((s, w) => s + doc.getTextWidth(w), 0);
+    const gap = (width - wordsW) / (words.length - 1);
+    if (gap < 0 || gap > 6) { doc.text(line, x, ly); return; }
+    let cx = x;
+    for (const word of words) { doc.text(word, cx, ly); cx += doc.getTextWidth(word) + gap; }
+  };
+
+  const drawSectionLabel = (label: string) => {
+    doc.setFont("helvetica", "bold"); doc.setFontSize(6.5); setText(GOLD);
+    doc.text(label.toUpperCase(), M, y, { charSpace: 1.9 });
+    y += 6;
+  };
+
+  paintPage(); drawHeader(); y = TOP_Y;
+
+  // ── ANNONCE ──
+  drawSectionLabel("Annonce professionnelle");
+  doc.setFont("helvetica", "bold"); doc.setFontSize(20); setText(TEXT);
+  const titreLines = doc.splitTextToSize(clean(result.annonce_pro.titre), CW);
+  const titreLH = 8.6;
+  for (const line of titreLines) { ensure(titreLH); doc.text(line, M, y); y += titreLH; }
+  y += 3;
+
+  const descFull = clean(result.annonce_pro.description);
+  let accroche = "", bodyText = descFull;
+  const m1 = descFull.match(/^([^.!?]{20,}[.!?])\s+([\s\S]+)$/);
+  if (m1) { accroche = m1[1]; bodyText = m1[2]; }
+  if (accroche) {
+    doc.setFont("helvetica", "italic"); doc.setFontSize(12); setText(GOLD);
+    const acc = doc.splitTextToSize(accroche, CW);
+    const accLH = 6;
+    for (const l of acc) { ensure(accLH); doc.text(l, M, y); y += accLH; }
+    y += 4;
+  } else { y += 1; }
+
+  ensure(8); drawDoubleRule(y); y += 8;
+
+  doc.setFont("helvetica", "normal"); doc.setFontSize(10); setText(TEXT);
+  const descParas = bodyText.split(/\n\s*\n/);
+  const bodyLH = 5.8;
+  for (let p = 0; p < descParas.length; p++) {
+    const ls = doc.splitTextToSize(descParas[p], CW);
+    for (let i = 0; i < ls.length; i++) {
+      ensure(bodyLH);
+      if (i === ls.length - 1) doc.text(ls[i], M, y);
+      else drawJustifiedLine(ls[i], M, y, CW);
+      y += bodyLH;
+    }
+    if (p < descParas.length - 1) y += 2.5;
+  }
+
+  // ── POINTS FORTS ──
+  y += 8; ensure(22); drawDoubleRule(y); y += 10;
+  drawSectionLabel("Points forts");
+
+  const cardPadX = 8, cardPadY = 8;
+  const cardInnerW = CW - cardPadX * 2 - W_BORDER_3PT;
+  const cardInnerX = M + W_BORDER_3PT + cardPadX;
+  const bulletGap = 5, bulletLH = 5.8;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+  const pfBlocks: string[][] = [];
+  for (const pf of (result.annonce_pro.points_forts || [])) {
+    const txt = clean(pf); if (!txt) continue;
+    pfBlocks.push(doc.splitTextToSize(txt, cardInnerW - bulletGap));
+  }
+
+  let pfIdx = 0;
+  while (pfIdx < pfBlocks.length) {
+    const avail = BOTTOM_Y - y;
+    const innerAvail = avail - cardPadY * 2;
+    let used = 0, inCard = 0;
+    while (pfIdx + inCard < pfBlocks.length) {
+      const b = pfBlocks[pfIdx + inCard];
+      const bH = b.length * bulletLH + 2;
+      if (used + bH > innerAvail && inCard > 0) break;
+      used += bH; inCard++;
+    }
+    if (inCard === 0) { newPage(); continue; }
+    const cardH = used + cardPadY * 2;
+    setFill(SOFT); doc.rect(M, y, CW, cardH, "F");
+    setFill(GOLD); doc.rect(M, y, W_BORDER_3PT, cardH, "F");
+    let cy = y + cardPadY + 3.5;
+    for (let i = 0; i < inCard; i++) {
+      const block = pfBlocks[pfIdx + i];
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10); setText(GOLD);
+      doc.text("›", M + W_BORDER_3PT + cardPadX, cy);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(10); setText(TEXT);
+      for (let k = 0; k < block.length; k++) {
+        doc.text(block[k], cardInnerX + bulletGap, cy);
+        cy += bulletLH;
+      }
+      cy += 2;
+    }
+    y += cardH; pfIdx += inCard;
+    if (pfIdx < pfBlocks.length) newPage();
+  }
+
+  // ── STORYBOARD ──
+  y += 8; ensure(22); drawDoubleRule(y); y += 10;
+  drawSectionLabel("Storyboard video");
+
+  const col1W = CW * 0.55, col2W = CW * 0.45;
+  const tHeaderH = 9, cellPadX = 3.5, cellPadY = 3.5, cellLH = 4.8;
+  const drawTableHeader = () => {
+    ensure(tHeaderH + 12);
+    setFill(BG_HEADER); doc.rect(M, y, CW, tHeaderH, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(7); setText(GOLD);
+    doc.text("CE QU'IL FAUT FILMER", M + cellPadX, y + tHeaderH / 2 + 1.6, { charSpace: 1.6 });
+    doc.text("VOIX OFF", M + col1W + cellPadX, y + tHeaderH / 2 + 1.6, { charSpace: 1.6 });
+    setDraw(GOLD); doc.setLineWidth(LW_RULE_03);
+    doc.line(M, y + tHeaderH, M + CW, y + tHeaderH);
+    y += tHeaderH;
+  };
+  drawTableHeader();
+
+  for (let s = 0; s < (result.storyboard_video || []).length; s++) {
+    const scene = result.storyboard_video[s];
+    const planTxt = clean(scene.plan), voixTxt = clean(scene.voix_off);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    const leftLines = doc.splitTextToSize(planTxt, col1W - cellPadX * 2);
+    doc.setFont("helvetica", "italic"); doc.setFontSize(9);
+    const rightLines = doc.splitTextToSize(voixTxt, col2W - cellPadX * 2);
+    const rowLines = Math.max(leftLines.length, rightLines.length);
+    const rowH = Math.max(rowLines * cellLH + cellPadY * 2, 12);
+    if (y + rowH > BOTTOM_Y) { newPage(); drawTableHeader(); }
+    if (s % 2 === 0) setFill(SOFT); else setFill(BG_PAGE);
+    doc.rect(M, y, CW, rowH, "F");
+    setDraw(GOLD); doc.setLineWidth(LW_RULE_01);
+    doc.line(M, y, M + CW, y);
+    doc.line(M, y + rowH, M + CW, y + rowH);
+    doc.line(M, y, M, y + rowH);
+    doc.line(M + CW, y, M + CW, y + rowH);
+    doc.line(M + col1W, y, M + col1W, y + rowH);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9); setText(TEXT);
+    for (let i = 0; i < leftLines.length; i++) {
+      doc.text(leftLines[i], M + cellPadX, y + cellPadY + 3 + i * cellLH);
+    }
+    doc.setFont("helvetica", "italic"); doc.setFontSize(9); setText(TEXT_DIM);
+    for (let i = 0; i < rightLines.length; i++) {
+      doc.text(rightLines[i], M + col1W + cellPadX, y + cellPadY + 3 + i * cellLH);
+    }
+    y += rowH;
+  }
+
+  // ── POST RÉSEAUX ──
+  y += 8; ensure(22); drawDoubleRule(y); y += 10;
+  drawSectionLabel("Post reseaux sociaux");
+
+  const socialRaw = cleanMulti(result.post_reseaux || "");
+  const padX = 10, padY = 10;
+  const innerW = CW - padX * 2;
+  const socialLH = 6, socialSize = 10, hashSize = 9;
+  type Token = { text: string; hash: boolean; w: number };
+  const layoutLines: Token[][] = [];
+  const paragraphs = socialRaw.split(/\n/);
+  for (let pi = 0; pi < paragraphs.length; pi++) {
+    const para = paragraphs[pi].trim();
+    if (!para) { layoutLines.push([]); continue; }
+    const words = para.split(/\s+/).filter(w => w.length > 0);
+    let current: Token[] = [], currentW = 0;
+    for (const word of words) {
+      const hash = word.startsWith("#");
+      if (hash) { doc.setFont("helvetica","bold"); doc.setFontSize(hashSize); }
+      else { doc.setFont("helvetica","normal"); doc.setFontSize(socialSize); }
+      const wW = doc.getTextWidth(word);
+      doc.setFont("helvetica","normal"); doc.setFontSize(socialSize);
+      const sW = doc.getTextWidth(" ");
+      const lead = current.length > 0 ? sW : 0;
+      if (currentW + lead + wW > innerW && current.length > 0) {
+        layoutLines.push(current); current = []; currentW = 0;
+      }
+      if (current.length > 0) { current.push({ text: " ", hash: false, w: sW }); currentW += sW; }
+      current.push({ text: word, hash, w: wW }); currentW += wW;
+    }
+    if (current.length > 0) layoutLines.push(current);
+  }
+
+  let lineIdx = 0;
+  while (lineIdx < layoutLines.length) {
+    const avail = BOTTOM_Y - y;
+    const innerAvail = avail - padY * 2;
+    if (innerAvail < socialLH) { newPage(); continue; }
+    const linesFit = Math.max(1, Math.floor(innerAvail / socialLH));
+    const take = Math.min(linesFit, layoutLines.length - lineIdx);
+    const blockH = take * socialLH + padY * 2;
+    setFill(BG_HEADER); doc.roundedRect(M, y, CW, blockH, 2, 2, "F");
+    setDraw(GOLD); doc.setLineWidth(LW_RULE_03);
+    doc.line(M + 2, y, M + CW - 2, y);
+    doc.line(M + 2, y + blockH, M + CW - 2, y + blockH);
+    let ly = y + padY + 4;
+    for (let i = 0; i < take; i++) {
+      const tokens = layoutLines[lineIdx + i];
+      let cx = M + padX;
+      for (const tok of tokens) {
+        if (tok.text === " ") { cx += tok.w; continue; }
+        if (tok.hash) { doc.setFont("helvetica","bold"); doc.setFontSize(hashSize); setText(GOLD); }
+        else { doc.setFont("helvetica","normal"); doc.setFontSize(socialSize); setText(SOCIAL_FG); }
+        doc.text(tok.text, cx, ly);
+        cx += tok.w;
+      }
+      ly += socialLH;
+    }
+    y += blockH; lineIdx += take;
+    if (lineIdx < layoutLines.length) newPage();
+  }
+
+  const totalPages = (doc as jsPDF & { internal: { getNumberOfPages: () => number } }).internal.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) { doc.setPage(p); drawFooter(p, totalPages); }
+
+  const slug = clean(result.annonce_pro.titre).toLowerCase().replace(/[^a-z0-9]+/g, "-").substring(0, 40).replace(/^-|-$/g, "");
+  doc.save(`immoflow-${plan}-${slug || "annonce"}.pdf`);
+}
+
 // ─── Icônes ───────────────────────────────────────────────────────────────────
 
 function IconFileText() {
@@ -733,7 +1083,12 @@ export default function ImmoFlowApp() {
                 </button>
 
                 <button
-                  onClick={() => exportPDF(result)}
+                  onClick={() => {
+                    const p = String(user?.publicMetadata?.plan ?? "solo").toLowerCase();
+                    if (p === "prestige") generatePDF(result, "prestige");
+                    else if (p === "agence") generatePDF(result, "agence", user?.publicMetadata?.agencyName as string | undefined, user?.publicMetadata?.agencyLogo as string | undefined);
+                    else exportPDF(result);
+                  }}
                   className="btn-primary"
                 >
                   <IconDownload />
