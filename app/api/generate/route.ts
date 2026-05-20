@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
 import { Redis } from "@upstash/redis";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -214,7 +215,12 @@ ${scenes}
 
 export async function POST(req: NextRequest) {
   try {
-    const { notes, mode, userId, plan } = await req.json();
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
+    }
+
+    const { notes, mode } = await req.json();
 
     if (!notes || typeof notes !== "string" || notes.trim().length === 0) {
       return NextResponse.json(
@@ -223,37 +229,42 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (notes.length > 5000) {
+      return NextResponse.json(
+        { error: "Le champ 'notes' ne peut pas dépasser 5 000 caractères." },
+        { status: 400 }
+      );
+    }
+
+    // ── Plan lu depuis Clerk (serveur), jamais depuis le client ──
+    const clerk = await clerkClient();
+    const clerkUser = await clerk.users.getUser(userId);
+    const userPlan = String(clerkUser.publicMetadata?.plan ?? "free").toLowerCase();
+
     // ── Vérification de la limite d'annonces ──
-    if (userId) {
-      const userPlan = plan || "free";
-      const limit = PLAN_LIMITS[userPlan] ?? 2;
+    const limit = PLAN_LIMITS[userPlan] ?? 2;
 
-      if (limit !== Infinity) {
-        // Clé Redis : reset chaque mois
-        const month = new Date().toISOString().slice(0, 7); // "2026-05"
-        const key = `usage:${userId}:${month}`;
+    if (limit !== Infinity) {
+      const month = new Date().toISOString().slice(0, 7);
+      const key = `usage:${userId}:${month}`;
 
-        const current = await redis.get<number>(key) || 0;
+      const current = await redis.get<number>(key) || 0;
 
-        if (current >= limit) {
-          return NextResponse.json(
-            {
-              error: `Limite atteinte. Votre plan ${userPlan} inclut ${limit} annonces/mois. Passez au plan supérieur pour continuer.`,
-              limitReached: true,
-            },
-            { status: 403 }
-          );
-        }
-
-        // Incrémenter le compteur
-        await redis.incr(key);
-        // Expire après 35 jours
-        await redis.expire(key, 35 * 24 * 60 * 60);
+      if (current >= limit) {
+        return NextResponse.json(
+          {
+            error: `Limite atteinte. Votre plan ${userPlan} inclut ${limit} annonces/mois. Passez au plan supérieur pour continuer.`,
+            limitReached: true,
+          },
+          { status: 403 }
+        );
       }
+
+      await redis.incr(key);
+      await redis.expire(key, 35 * 24 * 60 * 60);
     }
 
     // ── Sélection du prompt ──
-    const userPlan: string = plan || "free";
     const isPrestige = userPlan === "prestige" || userPlan === "agence";
     const sceneCount = userPlan === "agence" ? 8 : userPlan === "prestige" ? 6 : 3;
 
@@ -309,18 +320,16 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Historique Redis ──
-    if (userId) {
-      const historyKey = `history:${userId}`;
-      const entry = JSON.stringify({
-        id: Date.now(),
-        date: new Date().toISOString(),
-        titre: result.annonce_pro?.titre ?? "",
-        plan: userPlan,
-      });
-      await redis.lpush(historyKey, entry);
-      await redis.ltrim(historyKey, 0, 29);
-      await redis.expire(historyKey, 90 * 24 * 60 * 60);
-    }
+    const historyKey = `history:${userId}`;
+    const entry = JSON.stringify({
+      id: Date.now(),
+      date: new Date().toISOString(),
+      titre: result.annonce_pro?.titre ?? "",
+      plan: userPlan,
+    });
+    await redis.lpush(historyKey, entry);
+    await redis.ltrim(historyKey, 0, 29);
+    await redis.expire(historyKey, 90 * 24 * 60 * 60);
 
     return NextResponse.json(result, { status: 200 });
 
